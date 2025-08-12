@@ -249,7 +249,7 @@ typedef struct _OBJECT_ATTRIBUTES {
      ULONG CreateOptions,                 \
      PVOID EaBuffer,                      \
      ULONG EaLength))                     \
-                                          \                                        
+                                          \
   X(NTSTATUS,                             \
     NTAPI,                                \
     NtDeviceIoControlFile,                \
@@ -1593,7 +1593,7 @@ void reflock_unref(reflock_t* reflock) {
   /* Verify that the lock was referenced and not already destroyed. */
   assert((state & REFLOCK__DESTROY_MASK & ~REFLOCK__DESTROY) == 0);
 
-if ((state & REFLOCK__DESTROY_MASK) == REFLOCK__DESTROY &&
+  if ((state & REFLOCK__DESTROY_MASK) == REFLOCK__DESTROY &&
       (state & REFLOCK__REF_MASK) == 0)
     reflock__signal_event(reflock);
 }
