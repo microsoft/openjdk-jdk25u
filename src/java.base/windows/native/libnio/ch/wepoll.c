@@ -249,7 +249,7 @@ typedef struct _OBJECT_ATTRIBUTES {
      ULONG CreateOptions,                 \
      PVOID EaBuffer,                      \
      ULONG EaLength))                     \
-                                          \                                          
+                                          \                                        
   X(NTSTATUS,                             \
     NTAPI,                                \
     NtDeviceIoControlFile,                \
