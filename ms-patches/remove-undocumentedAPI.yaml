@@ -1,7 +1,7 @@
 title: Remove undocumented Windows APIs
-- work_item: 2250954
+- work_item: 2547129
 - author: dhanalla
-- owner: dhanalla
+- owner: kthatipally
 - contributors:
   - dhanalla
 - details:
