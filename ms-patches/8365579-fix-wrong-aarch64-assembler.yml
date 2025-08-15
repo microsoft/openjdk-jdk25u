@@ -1,0 +1,9 @@
+title: Use correct assembler for Windows aarch64
+- work_item: 2554879
+- jbs_bug: JDK-8365579
+- author: swesonga
+- owner: swesonga
+- contributors:
+- details:
+  - Backport of https://github.com/openjdk/jdk/pull/26791
+- release_note:
