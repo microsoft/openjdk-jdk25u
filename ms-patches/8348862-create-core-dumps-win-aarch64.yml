@@ -1,9 +1,0 @@
-title: Fix core dump creation on Windows AArch64
-- work_item: 2400237
-- jbs_bug: JDK-8348862
-- author: swesonga
-- owner: swesonga
-- contributors:
-- details:
-- release_note:
-  - Fixes an issue where core dumps were not created on the Windows AArch64 platform
