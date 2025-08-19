@@ -76,7 +76,15 @@ public class ShowRegistersOnAssertTest {
             } else if (Platform.isX86()) {
                 pattern = new Pattern[] { Pattern.compile("Registers:"), Pattern.compile("EAX=.*")};
             } else if (Platform.isAArch64()) {
-                pattern = new Pattern[] { Pattern.compile("Registers:"), Pattern.compile("R0=.*")};
+                if (Platform.isLinux()) {
+                    pattern = new Pattern[] { Pattern.compile("Registers:"), Pattern.compile("R0=.*")};
+                } else if (Platform.isWindows()) {
+                    pattern = new Pattern[] { Pattern.compile("Registers:"), Pattern.compile("X0 =.*")};
+                } else if (Platform.isOSX()) {
+                    pattern = new Pattern[] { Pattern.compile("Registers:"), Pattern.compile("x0=.*")};
+                } else {
+                    pattern = new Pattern[] { Pattern.compile("Registers:")};
+                }
             } else if (Platform.isS390x()) {
                 pattern = new Pattern[] { Pattern.compile("General Purpose Registers:"),
                                           Pattern.compile("^-{26}$"),
