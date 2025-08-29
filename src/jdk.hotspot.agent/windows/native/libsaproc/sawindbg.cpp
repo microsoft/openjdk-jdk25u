@@ -593,6 +593,47 @@ static bool addThreads(JNIEnv* env, jobject obj) {
 
     // Program counter
     ptrRegs[REG_INDEX(RIP)] = context.Rip;
+
+#elif _M_ARM64
+  #define REG_INDEX(x) sun_jvm_hotspot_debugger_aarch64_AARCH64ThreadContext_##x
+
+  context.ContextFlags = CONTEXT_FULL;
+  ptrIDebugAdvanced->GetThreadContext(&context, sizeof(CONTEXT));
+
+  ptrRegs[REG_INDEX(R0)]  = (jlong) context.X0;
+  ptrRegs[REG_INDEX(R1)]  = (jlong) context.X1;
+  ptrRegs[REG_INDEX(R2)]  = (jlong) context.X2;
+  ptrRegs[REG_INDEX(R3)]  = (jlong) context.X3;
+  ptrRegs[REG_INDEX(R4)]  = (jlong) context.X4;
+  ptrRegs[REG_INDEX(R5)]  = (jlong) context.X5;
+  ptrRegs[REG_INDEX(R6)]  = (jlong) context.X6;
+  ptrRegs[REG_INDEX(R7)]  = (jlong) context.X7;
+  ptrRegs[REG_INDEX(R8)]  = (jlong) context.X8;
+  ptrRegs[REG_INDEX(R9)]  = (jlong) context.X9;
+  ptrRegs[REG_INDEX(R10)] = (jlong) context.X10;
+  ptrRegs[REG_INDEX(R11)] = (jlong) context.X11;
+  ptrRegs[REG_INDEX(R12)] = (jlong) context.X12;
+  ptrRegs[REG_INDEX(R13)] = (jlong) context.X13;
+  ptrRegs[REG_INDEX(R14)] = (jlong) context.X14;
+  ptrRegs[REG_INDEX(R15)] = (jlong) context.X15;
+  ptrRegs[REG_INDEX(R16)] = (jlong) context.X16;
+  ptrRegs[REG_INDEX(R17)] = (jlong) context.X17;
+  ptrRegs[REG_INDEX(R18)] = (jlong) context.X18;
+  ptrRegs[REG_INDEX(R19)] = (jlong) context.X19;
+  ptrRegs[REG_INDEX(R20)] = (jlong) context.X20;
+  ptrRegs[REG_INDEX(R21)] = (jlong) context.X21;
+  ptrRegs[REG_INDEX(R22)] = (jlong) context.X22;
+  ptrRegs[REG_INDEX(R23)] = (jlong) context.X23;
+  ptrRegs[REG_INDEX(R24)] = (jlong) context.X24;
+  ptrRegs[REG_INDEX(R25)] = (jlong) context.X25;
+  ptrRegs[REG_INDEX(R26)] = (jlong) context.X26;
+  ptrRegs[REG_INDEX(R27)] = (jlong) context.X27;
+  ptrRegs[REG_INDEX(R28)] = (jlong) context.X28;
+
+  ptrRegs[REG_INDEX(FP)]  = (jlong) context.Fp;
+  ptrRegs[REG_INDEX(LR)]  = (jlong) context.Lr;
+  ptrRegs[REG_INDEX(SP)]  = (jlong) context.Sp;
+
 #endif
 
     env->ReleaseLongArrayElements(regs, ptrRegs, 0);
