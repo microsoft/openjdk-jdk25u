@@ -1,0 +1,13 @@
+title: AOT 
+- work_item: 2497554
+- author: macarte
+- owner: macarte
+- contributors:
+  - macarte
+- details:
+  - Moving work over from Leyden/premain that didn't make jdk25
+  - AOTCache MX Bean
+  - JCmd AOT.end_training
+  - The JCmd implementation had to change slightly as it originally called the metaspace code 
+  - indirectly through CDSUpCalls; however that system is not pulled across
+- release_note: Adding AOTCache MX Bean and JCMD AOT.end_training
