@@ -2802,11 +2802,17 @@ LONG WINAPI topLevelExceptionFilter(struct _EXCEPTION_POINTERS* exceptionInfo) {
     }
   }
 
+#if !defined(USE_VECTORED_EXCEPTION_HANDLING)
   if (exception_code != EXCEPTION_BREAKPOINT) {
     report_error(t, exception_code, pc, exception_record,
                  exceptionInfo->ContextRecord);
   }
-
+#else
+  if (exception_code != EXCEPTION_BREAKPOINT && exception_code != DBG_PRINTEXCEPTION_C) {
+    report_error(t, exception_code, pc, exception_record,
+                 exceptionInfo->ContextRecord);
+  }
+#endif
   return EXCEPTION_CONTINUE_SEARCH;
 }
 
