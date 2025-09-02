@@ -634,7 +634,6 @@ static bool addThreads(JNIEnv* env, jobject obj) {
     ptrRegs[REG_INDEX(LR)]  = (jlong) context.Lr;
     ptrRegs[REG_INDEX(SP)]  = (jlong) context.Sp;
     ptrRegs[REG_INDEX(PC)]  = (jlong) context.Pc;
-    ptrRegs[REG_INDEX(PSTATE)] = (jlong) context.Psr;
 
 #endif
 
