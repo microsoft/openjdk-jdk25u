@@ -6205,7 +6205,6 @@ const void* os::get_saved_assert_context(const void** sigInfo) {
   return nullptr;
 }
 
-#ifdef HAVE_PLATFORM_PRINT_NATIVE_STACK
 /*
 TODO: Investigate whether Windows AArch64 uses stack frames the way Java expects.
 If so, we can replace the os::win32::platform_print_native_stack() implementation
@@ -6315,4 +6314,3 @@ bool os::win32::platform_print_native_stack(outputStream* st, const void* contex
 
   return true;
 }
-#endif // HAVE_PLATFORM_PRINT_NATIVE_STACK
