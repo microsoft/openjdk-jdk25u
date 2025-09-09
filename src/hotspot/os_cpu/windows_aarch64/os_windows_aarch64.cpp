@@ -45,12 +45,10 @@
 #include "runtime/sharedRuntime.hpp"
 #include "runtime/stubRoutines.hpp"
 #include "runtime/timer.hpp"
-#include "symbolengine.hpp"
 #include "unwind_windows_aarch64.hpp"
 #include "utilities/debug.hpp"
 #include "utilities/events.hpp"
 #include "utilities/vmError.hpp"
-#include "windbghelp.hpp"
 
 // put OS-includes here
 # include <sys/types.h>
