@@ -6207,6 +6207,14 @@ const void* os::get_saved_assert_context(const void** sigInfo) {
 
 #ifdef HAVE_PLATFORM_PRINT_NATIVE_STACK
 /*
+TODO: Investigate whether Windows AArch64 uses stack frames the way Java expects.
+If so, we can replace the os::win32::platform_print_native_stack() implementation
+with one that uses the mechanism in vmError.cpp (and whether this comment is still
+accurate about that being the correct way to print native stacks). Otherwise, we
+need to keep this implementation and document that Windows AArch64 is similar
+to Windows x64 where there is commentary about Windows x64 behavior.
+*/
+/*
  * Windows/x64 does not use stack frames the way expected by Java:
  * [1] in most cases, there is no frame pointer. All locals are addressed via RSP
  * [2] in rare cases, when alloca() is used, a frame pointer is used, but this may
