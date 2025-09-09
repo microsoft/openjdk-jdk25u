@@ -6242,9 +6242,9 @@ bool os::win32::platform_print_native_stack(outputStream* st, const void* contex
   stk.AddrPC.Offset       = ctx.Rip;
   machine_type           = IMAGE_FILE_MACHINE_AMD64;
 #elif defined(_M_ARM64)
-  stk.AddrStack.Offset    = ctx.Rsp;
-  stk.AddrFrame.Offset    = ctx.Rbp;
-  stk.AddrPC.Offset       = ctx.Rip;
+  stk.AddrStack.Offset    = ctx.Sp;
+  stk.AddrFrame.Offset    = ctx.Fp;
+  stk.AddrPC.Offset       = ctx.Pc;
   machine_type           = IMAGE_FILE_MACHINE_ARM64;
 #else
   #error unknown architecture
