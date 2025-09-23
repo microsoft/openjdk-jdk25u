@@ -26,7 +26,7 @@
 #include <Windows.h>
 
 // Use an exception code that causes the FAILED() macro to return true.
-const DWORD EX_CODE = 0xcafebabe;
+const DWORD EX_CODE = 0xdeadbeef;
 
 JNIEXPORT void JNICALL Java_UncaughtNativeExceptionTest_00024Crasher_throwException(JNIEnv* env, jclass cls) {
   RaiseException(EX_CODE, EXCEPTION_NONCONTINUABLE, 0, NULL);
