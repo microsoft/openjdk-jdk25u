@@ -187,6 +187,7 @@ void StubAssembler::epilogue(bool use_pop) {
   // restored from the stub would be invalid. We still
   // must restore the rfp value saved on enter though.
   if (use_pop) {
+    mov(sp, rfp);
     ldp(rfp, lr, Address(post(sp, 2 * wordSize)));
     authenticate_return_address();
   } else {
