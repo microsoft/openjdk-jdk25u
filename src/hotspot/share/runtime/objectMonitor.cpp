@@ -1607,9 +1607,13 @@ void ObjectMonitor::exit_epilog(JavaThread* current, ObjectWaiter* Wakee) {
     set_successor(t);
   } else {
     vthread = Wakee->vthread();
-    assert(vthread != nullptr, "");
-    Trigger = ObjectMonitor::vthread_unparker_ParkEvent();
-    set_successor(vthread);
+    if (vthread == nullptr) {
+      // assert(false, "Wakee vthread is null");
+      clear_successor();
+    } else {
+      Trigger = ObjectMonitor::vthread_unparker_ParkEvent();
+      set_successor(vthread);
+    }
   }
 
   // Hygiene -- once we've set _owner = nullptr we can't safely dereference Wakee again.
