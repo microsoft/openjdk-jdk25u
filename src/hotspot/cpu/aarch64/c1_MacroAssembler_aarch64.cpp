@@ -73,6 +73,9 @@ int C1_MacroAssembler::lock_object(Register hdr, Register obj, Register disp_hdr
   null_check_offset = offset();
 
   if (LockingMode == LM_LIGHTWEIGHT) {
+    // Reload rthread before lock operation since it might be stale after
+    // a virtual thread continuation yield in a previous call
+    get_thread(rthread);
     lightweight_lock(disp_hdr, obj, hdr, temp, rscratch2, slow_case);
   } else if (LockingMode == LM_LEGACY) {
 
