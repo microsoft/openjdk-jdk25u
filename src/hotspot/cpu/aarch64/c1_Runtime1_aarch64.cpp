@@ -69,6 +69,11 @@ int StubAssembler::call_RT(Register oop_result1, Register metadata_result, addre
   blr(rscratch1);
   bind(retaddr);
   int call_offset = offset();
+
+  // Reload rthread after call since it might have changed due to
+  // virtual thread mount/unmount operations triggered by continuation yield
+  get_thread(rthread);
+
   // verify callee-saved register
 #ifdef ASSERT
   push(r0, sp);
