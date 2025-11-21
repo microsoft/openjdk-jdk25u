@@ -1152,6 +1152,10 @@ static void gen_continuation_enter(MacroAssembler* masm,
   ContinuationEntry::_return_pc_offset = __ pc() - start;
   __ post_call_nop();
 
+  // Reload rthread as the current thread may have changed during thaw
+  // (e.g., virtual thread mount operations)
+  __ get_thread(rthread);
+
   __ bind(exit);
   ContinuationEntry::_cleanup_offset = __ pc() - start;
   continuation_enter_cleanup(masm);
@@ -1222,6 +1226,10 @@ static void gen_continuation_yield(MacroAssembler* masm,
     __ set_last_Java_frame(sp, rfp, the_pc, rscratch1);
     __ call_VM_leaf(Continuation::freeze_entry(), 2);
     __ reset_last_Java_frame(true);
+
+    // Reload rthread as the current thread may have changed during freeze
+    // (e.g., virtual thread unmount/mount operations)
+    __ get_thread(rthread);
 
     Label pinned;
 
