@@ -581,6 +581,9 @@ OopMapSet* Runtime1::generate_patching(StubAssembler* sasm, address target) {
 
   OopMap* oop_map = save_live_registers(sasm);
 
+  // Reload rthread before using it since it might be stale after
+  // a virtual thread continuation yield
+  __ get_thread(rthread);
   __ mov(c_rarg0, rthread);
   Label retaddr;
   __ set_last_Java_frame(sp, rfp, retaddr, rscratch1);

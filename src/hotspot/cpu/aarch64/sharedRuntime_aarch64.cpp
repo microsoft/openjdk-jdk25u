@@ -1222,6 +1222,8 @@ static void gen_continuation_yield(MacroAssembler* masm,
 
     __ post_call_nop(); // this must be exactly after the pc value that is pushed into the frame info, we use this nop for fast CodeBlob lookup
 
+    // Reload rthread before using it since it might be stale
+    __ get_thread(rthread);
     __ mov(c_rarg0, rthread);
     __ set_last_Java_frame(sp, rfp, the_pc, rscratch1);
     __ call_VM_leaf(Continuation::freeze_entry(), 2);
