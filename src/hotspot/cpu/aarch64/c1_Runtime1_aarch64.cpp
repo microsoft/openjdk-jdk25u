@@ -58,6 +58,9 @@ int StubAssembler::call_RT(Register oop_result1, Register metadata_result, addre
   assert(args_size >= 0, "illegal args_size");
   bool align_stack = false;
 
+  // Reload rthread before passing it as argument since it might be stale after
+  // a virtual thread continuation yield in a previous call
+  get_thread(rthread);
   mov(c_rarg0, rthread);
   set_num_rt_args(0); // Nothing on stack
 
