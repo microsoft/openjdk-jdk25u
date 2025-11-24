@@ -10547,6 +10547,8 @@ class StubGenerator: public StubCodeGenerator {
       __ br(r1); // the exception handler
     } else {
       // We're "returning" into the topmost thawed frame; see Thaw::push_return_frame
+      // Update rthread to current thread since thawed frames have stale cached rthread
+      __ get_thread(rthread);
       __ leave();
       __ ret(lr);
     }
