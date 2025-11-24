@@ -147,6 +147,9 @@ void C1_MacroAssembler::unlock_object(Register hdr, Register obj, Register disp_
   verify_oop(obj);
 
   if (LockingMode == LM_LIGHTWEIGHT) {
+    // Reload rthread before unlock operation since it might be stale after
+    // a virtual thread continuation yield in a previous call
+    get_thread(rthread);
     lightweight_unlock(obj, hdr, temp, rscratch2, slow_case);
   } else if (LockingMode == LM_LEGACY) {
     // test if object header is pointing to the displaced header, and if so, restore
