@@ -47,6 +47,9 @@ private:
 public:
 
   static Thread *aarch64_get_thread_helper() {
+     // Ensure we see the latest thread value after virtual thread mount/unmount
+     // by adding a barrier before reading the thread-local variable
+     OrderAccess::loadload();
      return Thread::current();
   }
 
