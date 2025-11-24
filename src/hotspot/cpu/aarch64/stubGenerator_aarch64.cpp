@@ -10542,6 +10542,8 @@ class StubGenerator: public StubCodeGenerator {
       __ mov(r0, r19); // restore return value containing the exception oop
       __ verify_oop(r0);
 
+      // Update rthread to current thread since thawed frames have stale cached rthread
+      __ get_thread(rthread);
       __ leave();
       __ mov(r3, lr);
       __ br(r1); // the exception handler
