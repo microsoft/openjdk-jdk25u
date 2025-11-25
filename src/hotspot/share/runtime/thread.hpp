@@ -662,7 +662,10 @@ inline Thread* Thread::current() {
 }
 
 inline Thread* Thread::current_or_null() {
-  return _thr_current;
+  // Use volatile read to prevent compiler from caching the TLS value
+  // across virtual thread mount/unmount operations on Windows AArch64
+  Thread* volatile * ptr = &_thr_current;
+  return *ptr;
 }
 
 inline Thread* Thread::current_or_null_safe() {

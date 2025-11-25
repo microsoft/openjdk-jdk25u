@@ -48,9 +48,11 @@ public:
 
   static Thread *aarch64_get_thread_helper() {
      // Ensure we see the latest thread value after virtual thread mount/unmount
-     // by adding a barrier before reading the thread-local variable
-     OrderAccess::loadload();
-     return Thread::current();
+     // Use full fence to guarantee visibility across all CPUs and caches
+     OrderAccess::fence();
+     Thread* thread = Thread::current();
+     OrderAccess::fence();
+     return thread;
   }
 
 #endif // OS_CPU_WINDOWS_AARCH64_JAVATHREAD_WINDOWS_AARCH64_HPP
