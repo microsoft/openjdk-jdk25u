@@ -61,6 +61,8 @@ int StubAssembler::call_RT(Register oop_result1, Register metadata_result, addre
   // Reload rthread before passing it as argument since it might be stale after
   // a virtual thread continuation yield in a previous call
   get_thread(rthread);
+  // Memory barrier to ensure thread value is fully visible on Windows AArch64
+  __ dmb(Assembler::ISH);
   mov(c_rarg0, rthread);
   set_num_rt_args(0); // Nothing on stack
 
@@ -584,6 +586,8 @@ OopMapSet* Runtime1::generate_patching(StubAssembler* sasm, address target) {
   // Reload rthread before using it since it might be stale after
   // a virtual thread continuation yield
   __ get_thread(rthread);
+  // Memory barrier to ensure thread value is fully visible on Windows AArch64
+  __ dmb(Assembler::ISH);
   __ mov(c_rarg0, rthread);
   Label retaddr;
   __ set_last_Java_frame(sp, rfp, retaddr, rscratch1);

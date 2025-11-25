@@ -1224,6 +1224,8 @@ static void gen_continuation_yield(MacroAssembler* masm,
 
     // Reload rthread before using it since it might be stale
     __ get_thread(rthread);
+    // Memory barrier to ensure thread value is fully visible on Windows AArch64
+    __ dmb(Assembler::ISH);
     __ mov(c_rarg0, rthread);
     __ set_last_Java_frame(sp, rfp, the_pc, rscratch1);
     __ call_VM_leaf(Continuation::freeze_entry(), 2);
