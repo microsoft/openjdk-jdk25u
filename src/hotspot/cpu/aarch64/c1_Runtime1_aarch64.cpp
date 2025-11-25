@@ -62,7 +62,7 @@ int StubAssembler::call_RT(Register oop_result1, Register metadata_result, addre
   // a virtual thread continuation yield in a previous call
   get_thread(rthread);
   // Memory barrier to ensure thread value is fully visible on Windows AArch64
-  __ dmb(Assembler::ISH);
+  dmb(Assembler::ISH);
   mov(c_rarg0, rthread);
   set_num_rt_args(0); // Nothing on stack
 
