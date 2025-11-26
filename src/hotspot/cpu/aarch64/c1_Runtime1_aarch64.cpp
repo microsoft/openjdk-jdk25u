@@ -320,10 +320,7 @@ static void restore_live_registers(StubAssembler* sasm, bool restore_fpu_registe
     __ add(sp, sp, 32 * wordSize);
   }
 
-  // Restore r0-r27, r29 but skip r28 (rthread) which may have been updated
-  // during the call due to virtual thread mount/unmount operations
-  __ pop(RegSet::range(r0, r27) + r29, sp);
-  __ add(sp, sp, wordSize); // Skip r28 slot on stack
+  __ pop(RegSet::range(r0, r29), sp);
 }
 
 static void restore_live_registers_except_r0(StubAssembler* sasm, bool restore_fpu_registers = true)  {
@@ -336,10 +333,8 @@ static void restore_live_registers_except_r0(StubAssembler* sasm, bool restore_f
     __ add(sp, sp, 32 * wordSize);
   }
 
-  // Restore r1-r27, r29 but skip r0 (return value) and r28 (rthread which may have been updated)
   __ ldp(zr, r1, Address(__ post(sp, 16)));
-  __ pop(RegSet::range(r2, r27) + r29, sp);
-  __ add(sp, sp, wordSize); // Skip r28 slot on stack
+  __ pop(RegSet::range(r2, r29), sp);
 }
 
 
