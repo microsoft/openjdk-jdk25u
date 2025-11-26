@@ -320,7 +320,10 @@ static void restore_live_registers(StubAssembler* sasm, bool restore_fpu_registe
     __ add(sp, sp, 32 * wordSize);
   }
 
+  // Restore all registers including r28, but then reload r28 (rthread) with fresh value
+  // because it may have changed during virtual thread mount/unmount operations
   __ pop(RegSet::range(r0, r29), sp);
+  __ get_thread(rthread);
 }
 
 static void restore_live_registers_except_r0(StubAssembler* sasm, bool restore_fpu_registers = true)  {
@@ -333,8 +336,11 @@ static void restore_live_registers_except_r0(StubAssembler* sasm, bool restore_f
     __ add(sp, sp, 32 * wordSize);
   }
 
+  // Restore all registers except r0 (return value), but then reload r28 (rthread)
+  // because it may have changed during virtual thread mount/unmount operations
   __ ldp(zr, r1, Address(__ post(sp, 16)));
   __ pop(RegSet::range(r2, r29), sp);
+  __ get_thread(rthread);
 }
 
 
