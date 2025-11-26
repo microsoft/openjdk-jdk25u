@@ -562,7 +562,7 @@ static unsigned thread_native_entry(void* t) {
     res = 20115;    // java thread
   }
 
-  log_info(os, thread)("Thread is alive (tid: %zu, stacksize: %zuk).", os::current_thread_id(), thread->stack_size() / K);
+  log_info(os, thread)("Thread is alive (tid: %zu, stacksize: %zuk). Thread* " PTR_FORMAT, os::current_thread_id(), thread->stack_size() / K, p2i(thread));
 
 #ifdef USE_VECTORED_EXCEPTION_HANDLING
   // Any exception is caught by the Vectored Exception Handler, so VM can
