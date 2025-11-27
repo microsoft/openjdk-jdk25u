@@ -22,6 +22,7 @@
  *
  */
 
+#include "logging/log.hpp"
 #include "runtime/threadLocalStorage.hpp"
 #include "utilities/debug.hpp"
 #include <windows.h>
@@ -59,5 +60,6 @@ Thread* ThreadLocalStorage::thread() {
 void ThreadLocalStorage::set_thread(Thread* current) {
   assert(_initialized, "TLS not initialized yet!");
   BOOL res = TlsSetValue(_thread_key, current);
+  log_info(os, thread)("ThreadLocalStorage::set_thread (tid: %zu) current(" PTR_FORMAT ") = %d", os::current_thread_id(), p2i(current), (int)res);
   assert(res, "TlsSetValue failed with error code: %lu", GetLastError());
 }
