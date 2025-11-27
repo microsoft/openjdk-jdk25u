@@ -53,6 +53,7 @@ inline void ObjectSynchronizer::enter(Handle obj, BasicLock* lock, JavaThread* c
 }
 
 inline bool ObjectSynchronizer::quick_enter(oop obj, BasicLock* lock, JavaThread* current) {
+  assert(current == Thread::current(), "must be");
   assert(current->thread_state() == _thread_in_Java, "invariant");
   NoSafepointVerifier nsv;
   if (obj == nullptr) return false;       // Need to throw NPE
