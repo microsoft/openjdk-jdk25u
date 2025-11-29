@@ -25,10 +25,13 @@
 #ifndef CPU_AARCH64_CONTINUATIONFREEZETHAW_AARCH64_INLINE_HPP
 #define CPU_AARCH64_CONTINUATIONFREEZETHAW_AARCH64_INLINE_HPP
 
+#include "asm/register.hpp"
 #include "code/codeBlob.inline.hpp"
+#include "compiler/oopMap.hpp"
 #include "oops/stackChunkOop.inline.hpp"
 #include "runtime/frame.hpp"
 #include "runtime/frame.inline.hpp"
+#include "runtime/javaThread.hpp"
 
 
 inline void patch_callee_link(const frame& f, intptr_t* fp) {
@@ -285,6 +288,25 @@ inline intptr_t* ThawBase::align(const frame& hf, intptr_t* frame_sp, frame& cal
 
 inline void ThawBase::patch_pd(frame& f, const frame& caller) {
   patch_callee_link(caller, caller.fp());
+  
+  // Patch saved r28 (rthread) values in compiled frames to current thread
+  // When virtual threads migrate between carriers, frozen frames contain stale thread pointers
+  if (f.is_compiled_frame() && f.oop_map() != nullptr) {
+    VMReg r28_reg = r28->as_VMReg();
+    for (OopMapStream oms(f.oop_map()); !oms.is_done(); oms.next()) {
+      if (oms.current().type() == OopMapValue::callee_saved_value && oms.current().content_reg() == r28_reg) {
+        VMReg reg = oms.current().reg();
+        intptr_t* loc = reg->is_stack() ? (intptr_t*)(f.sp() + reg->reg2stack() * VMRegImpl::stack_slot_size)
+                                        : nullptr;
+        if (loc != nullptr) {
+          *loc = (intptr_t)JavaThread::current();
+          log_develop_trace(continuations)("Patched saved r28 at " INTPTR_FORMAT " to current thread " INTPTR_FORMAT, 
+                                          p2i(loc), p2i(JavaThread::current()));
+        }
+        break;
+      }
+    }
+  }
 }
 
 inline void ThawBase::patch_pd(frame& f, intptr_t* caller_sp) {
