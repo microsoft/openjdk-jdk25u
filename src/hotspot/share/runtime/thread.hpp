@@ -663,11 +663,10 @@ inline Thread* Thread::current() {
 
 inline Thread* Thread::current_or_null() {
 #if defined(_WIN32) && defined(_M_ARM64)
-  if (ThreadLocalStorage::is_initialized()) {
-    return ThreadLocalStorage::thread();
-  }
-#endif
+  return current_or_null_safe();
+#else
   return _thr_current;
+#endif
 }
 
 inline Thread* Thread::current_or_null_safe() {

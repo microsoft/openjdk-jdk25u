@@ -52,6 +52,7 @@ Thread* ThreadLocalStorage::thread() {
   // checking TLS is initialized - see java.cpp vm_exit
   assert(_initialized, "TLS not initialized yet!");
   Thread* current = (Thread*) TlsGetValue(_thread_key);
+  //log_info(os, thread)("ThreadLocalStorage::thread (tid: %zu) = " PTR_FORMAT ", _thread_key = %d", os::current_thread_id(), p2i(current), _thread_key);
   assert(current != 0 || GetLastError() == ERROR_SUCCESS,
          "TlsGetValue failed with error code: %lu", GetLastError());
   return current;
@@ -62,4 +63,6 @@ void ThreadLocalStorage::set_thread(Thread* current) {
   BOOL res = TlsSetValue(_thread_key, current);
   log_info(os, thread)("ThreadLocalStorage::set_thread (tid: %zu) current(" PTR_FORMAT ") = %d, _thread_key = %d", os::current_thread_id(), p2i(current), (int)res, _thread_key);
   assert(res, "TlsSetValue failed with error code: %lu", GetLastError());
+  Thread* read_back_thread_ptr = ThreadLocalStorage::thread();
+  log_info(os, thread)("ThreadLocalStorage::thread (tid: %zu) = " PTR_FORMAT ", _thread_key = %d", os::current_thread_id(), p2i(read_back_thread_ptr), _thread_key);
 }
