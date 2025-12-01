@@ -373,6 +373,16 @@ uint Runtime1::runtime_blob_current_thread_offset(frame f) {
   return offset / 2;   // SP offsets are in halfwords
 }
 
+// return: offset in 64-bit words.
+uint Runtime1::runtime_blob_r0_offset(frame f) {
+  CodeBlob* cb = f.cb();
+  assert(cb == Runtime1::blob_for(C1StubId::monitorenter_id) ||
+         cb == Runtime1::blob_for(C1StubId::monitorenter_nofpu_id), "must be");
+  assert(cb != nullptr && cb->is_runtime_stub(), "invalid frame");
+  int offset = cpu_reg_save_offsets[c_rarg0->encoding()];
+  return offset / 2;   // SP offsets are in halfwords
+}
+
 // target: the entry point of the method that creates and posts the exception oop
 // has_argument: true if the exception needs arguments (passed in rscratch1 and rscratch2)
 

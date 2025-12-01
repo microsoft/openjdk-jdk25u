@@ -2605,6 +2605,10 @@ VMReg SharedRuntime::thread_register() {
   return rthread->as_VMReg();
 }
 
+VMReg SharedRuntime::c_rarg0_register() {
+  return c_rarg0->as_VMReg();
+}
+
 //------------------------------generate_handler_blob------
 //
 // Generate a special Compile2Runtime blob that saves all registers,

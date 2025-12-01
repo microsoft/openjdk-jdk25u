@@ -454,6 +454,29 @@ JavaThread** frame::saved_thread_address(const frame& f) {
   return thread_addr;
 }
 
+#if defined(_WIN32) && defined(_M_ARM64)
+JavaThread** frame::saved_r0_address(const frame& f) {
+  CodeBlob* cb = f.cb();
+  assert(cb != nullptr && cb->is_runtime_stub(), "invalid frame");
+
+  JavaThread** r0_addr;
+#ifdef COMPILER1
+  if (cb == Runtime1::blob_for(C1StubId::monitorenter_id) ||
+      cb == Runtime1::blob_for(C1StubId::monitorenter_nofpu_id)) {
+    r0_addr = (JavaThread**)(f.sp() + Runtime1::runtime_blob_r0_offset(f));
+    if (TestFlag3) {
+      r0_addr = (JavaThread**)get_register_address_in_stub(f, SharedRuntime::c_rarg0_register());
+    }
+  } else
+#endif
+  {
+    // c2 only saves rbp in the stub frame so nothing to do.
+    r0_addr = nullptr;
+  }
+  return r0_addr;
+}
+#endif
+
 //------------------------------------------------------------------------------
 // frame::verify_deopt_original_pc
 //

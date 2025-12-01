@@ -427,6 +427,9 @@ class frame {
   void set_saved_oop_result(RegisterMap* map, oop obj);
 
   static JavaThread** saved_thread_address(const frame& f);
+#if defined(_WIN32) && defined(_M_ARM64)
+  static JavaThread** saved_r0_address(const frame& f);
+#endif
 
   // For debugging
  private:

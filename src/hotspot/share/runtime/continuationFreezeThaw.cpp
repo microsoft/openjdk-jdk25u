@@ -29,6 +29,7 @@
 #include "code/vmreg.inline.hpp"
 #include "compiler/oopMap.inline.hpp"
 #include "gc/shared/continuationGCSupport.inline.hpp"
+#include "globals.hpp"
 #include "gc/shared/gc_globals.hpp"
 #include "gc/shared/barrierSet.hpp"
 #include "gc/shared/memAllocator.hpp"
@@ -2499,8 +2500,34 @@ intptr_t* ThawBase::handle_preempted_continuation(intptr_t* sp, Continuation::pr
   } else if (top.is_runtime_frame()) {
     // The continuation might now run on a different platform thread than the previous time so
     // we need to adjust the current thread saved in the stub frame before restoring registers.
-    JavaThread** thread_addr = frame::saved_thread_address(top);
-    if (thread_addr != nullptr) *thread_addr = _thread;
+    if (TestFlag1) {
+      JavaThread** thread_addr = frame::saved_thread_address(top);
+      if (thread_addr != nullptr) {
+        log_develop_debug(continuations)("ThawBase::handle_preempted_continuation changing current thread saved in the stub frame from " INTPTR_FORMAT " to " INTPTR_FORMAT " with pc " INTPTR_FORMAT, p2i(*thread_addr), p2i(_thread), p2i(top.pc()));
+        *thread_addr = _thread;
+      } else {
+        log_develop_debug(continuations)("ThawBase::handle_preempted_continuation thread_addr == nullptr for _thread " INTPTR_FORMAT " with pc " INTPTR_FORMAT, p2i(_thread), p2i(top.pc()));
+      }
+
+      if (TestFlag2) {
+      #ifdef COMPILER1
+        // also need to adjust the value of x0 (current)
+        assert(thread_addr != nullptr, "invalid r0 value in ThawBase::handle_preempted_continuation");
+        log_develop_debug(continuations)("ThawBase::handle_preempted_continuation changing r0 saved in the stub frame from " INTPTR_FORMAT " to " INTPTR_FORMAT " with pc " INTPTR_FORMAT, p2i(*thread_addr), p2i(_thread), p2i(top.pc()));
+        *thread_addr = _thread;
+
+        if (TestFlag4) {
+          if (thread_addr != nullptr) {
+            //__int64** thread_addr_64 = (__int64**)thread_addr;
+            for (int i = 1; i < 32; i++) {
+              log_develop_debug(continuations)("ThawBase::handle_preempted_continuation found [%d]" INTPTR_FORMAT " at address " INTPTR_FORMAT " with pc " INTPTR_FORMAT, i, p2i(thread_addr[i]), p2i(&thread_addr[i]), p2i(top.pc()));
+              log_develop_debug(continuations)("ThawBase::handle_preempted_continuation found [%d]" INTPTR_FORMAT " at address " INTPTR_FORMAT " with pc " INTPTR_FORMAT, -i, p2i(thread_addr[-i]), p2i(&thread_addr[-i]), p2i(top.pc()));
+            }
+          }
+        }
+      #endif
+      }
+    }
   }
   return sp;
 }

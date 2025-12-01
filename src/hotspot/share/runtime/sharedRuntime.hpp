@@ -514,6 +514,9 @@ class SharedRuntime: AllStatic {
   static uint in_preserve_stack_slots();
 
   static VMReg thread_register();
+#if defined(_WIN32) && defined(_M_ARM64)
+  static VMReg c_rarg0_register();
+#endif
 
   static void continuation_enter_cleanup(MacroAssembler* masm);
 
