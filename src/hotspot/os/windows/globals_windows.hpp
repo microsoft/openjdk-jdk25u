@@ -38,6 +38,21 @@
 product(bool, UseAllWindowsProcessorGroups, false,                        \
         "Use all processor groups on supported Windows versions")         \
                                                                           \
+product(bool, TestFlag1, false,                                           \
+        "A test flag for development purposes")                           \
+                                                                          \
+product(bool, TestFlag2, false,                                           \
+        "A test flag for development purposes")                           \
+                                                                          \
+product(bool, TestFlag3, false,                                           \
+        "A test flag for development purposes")                           \
+                                                                          \
+product(bool, TestFlag4, false,                                           \
+        "A test flag for development purposes")                           \
+                                                                          \
+product(bool, TestFlag5, false,                                           \
+        "A test flag for development purposes")                           \
+                                                                          \
 product(bool, EnableAllLargePageSizesForWindows, false,                   \
         "Enable support for multiple large page sizes on "                \
         "Windows Server")                                                 \
