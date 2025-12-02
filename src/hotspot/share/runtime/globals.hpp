@@ -2009,6 +2009,36 @@ const int ObjectAlignmentInBytes = 8;
   develop(uint, BinarySearchThreshold, 16,                                  \
           "Minimal number of elements in a sorted collection to prefer"     \
           "binary search over simple linear search." )                      \
+                                                                            \
+  develop(bool, TestFlag1, false,                                           \
+          "A test flag for development purposes")                           \
+                                                                            \
+  develop(bool, TestFlag2, false,                                           \
+          "A test flag for development purposes")                           \
+                                                                            \
+  develop(bool, TestFlag3, false,                                           \
+          "A test flag for development purposes")                           \
+                                                                            \
+  develop(bool, TestFlag4, false,                                           \
+          "A test flag for development purposes")                           \
+                                                                            \
+  develop(bool, TestFlag5, false,                                           \
+          "A test flag for development purposes")                           \
+                                                                            \
+  develop(bool, TestFlag6, false,                                           \
+          "A test flag for development purposes")                           \
+                                                                            \
+  develop(bool, TestFlag7, false,                                           \
+          "A test flag for development purposes")                           \
+                                                                            \
+  develop(bool, TestFlag8, false,                                           \
+          "A test flag for development purposes")                           \
+                                                                            \
+  develop(bool, TestFlag9, false,                                           \
+          "A test flag for development purposes")                           \
+                                                                            \
+  develop(bool, TestFlagA, false,                                           \
+          "A test flag for development purposes")                           \
 
 // end of RUNTIME_FLAGS
 
