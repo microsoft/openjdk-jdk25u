@@ -134,6 +134,7 @@ int StubAssembler::call_RT(Register oop_result1, Register metadata_result, addre
 
 
 int StubAssembler::call_RT(Register oop_result1, Register metadata_result, address entry, Register arg1, Register arg2) {
+  dmb(Assembler::ISH);
   if (c_rarg1 == arg2) {
     if (c_rarg2 == arg1) {
       mov(rscratch1, arg1);
