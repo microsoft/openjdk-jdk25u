@@ -2513,20 +2513,20 @@ intptr_t* ThawBase::handle_preempted_continuation(intptr_t* sp, Continuation::pr
       if (TestFlag2) {
         if (thread_addr != nullptr) {
           //__int64** thread_addr_64 = (__int64**)thread_addr;
-          for (int i = 31; i > 0; i--) {
+          for (int i = 64; i > 0; i--) {
             log_develop_debug(continuations)("ThawBase::handle_preempted_continuation found [%d]" INTPTR_FORMAT " at address " INTPTR_FORMAT " with pc " INTPTR_FORMAT " sp " INTPTR_FORMAT, i, p2i(thread_addr[i]), p2i(&thread_addr[i]), p2i(top.pc()), p2i(top.sp()));
           }
-          for (int i = 0; i < 32; i++) {
+          for (int i = 0; i <= 64; i++) {
             log_develop_debug(continuations)("ThawBase::handle_preempted_continuation found [%d]" INTPTR_FORMAT " at address " INTPTR_FORMAT " with pc " INTPTR_FORMAT " sp " INTPTR_FORMAT, -i, p2i(thread_addr[-i]), p2i(&thread_addr[-i]), p2i(top.pc()), p2i(top.sp()));
           }
         }
 
         thread_addr = (JavaThread**)top.sp();
         if (thread_addr != nullptr) {
-          for (int i = 31; i > 0; i--) {
+          for (int i = 64; i > 0; i--) {
             log_develop_debug(continuations)("ThawBase::handle_preempted_continuation top.sp()[%d]=" INTPTR_FORMAT " at address " INTPTR_FORMAT " with pc " INTPTR_FORMAT " sp " INTPTR_FORMAT, i, p2i(thread_addr[i]), p2i(&thread_addr[i]), p2i(top.pc()), p2i(top.sp()));
           }
-          for (int i = 0; i < 32; i++) {
+          for (int i = 0; i <= 64; i++) {
             log_develop_debug(continuations)("ThawBase::handle_preempted_continuation top.sp()[%d]=" INTPTR_FORMAT " at address " INTPTR_FORMAT " with pc " INTPTR_FORMAT " sp " INTPTR_FORMAT, -i, p2i(thread_addr[-i]), p2i(&thread_addr[-i]), p2i(top.pc()), p2i(top.sp()));
           }
         }
