@@ -10463,6 +10463,7 @@ class StubGenerator: public StubCodeGenerator {
     bool return_barrier_exception = Continuation::is_thaw_return_barrier_exception(kind);
 
     address start = __ pc();
+    __ dmb(Assembler::OSHLD);
 
     if (return_barrier) {
       __ ldr(rscratch1, Address(rthread, JavaThread::cont_entry_offset()));
@@ -10545,10 +10546,12 @@ class StubGenerator: public StubCodeGenerator {
       __ leave();
       __ mov(r3, lr);
       __ br(r1); // the exception handler
+      __ dmb(Assembler::OSHST);
     } else {
       // We're "returning" into the topmost thawed frame; see Thaw::push_return_frame
       __ leave();
       __ ret(lr);
+      __ dmb(Assembler::OSHST);
     }
 
     return start;
@@ -10560,6 +10563,7 @@ class StubGenerator: public StubCodeGenerator {
     StubGenStubId stub_id = StubGenStubId::cont_thaw_id;
     StubCodeMark mark(this, stub_id);
     address start = __ pc();
+    __ dmb(Assembler::ISHLD);
     generate_cont_thaw(Continuation::thaw_top);
     return start;
   }
@@ -10572,6 +10576,7 @@ class StubGenerator: public StubCodeGenerator {
     StubCodeMark mark(this, stub_id);
     address start = __ pc();
 
+    __ dmb(Assembler::LD);
     generate_cont_thaw(Continuation::thaw_return_barrier);
 
     return start;
@@ -10584,6 +10589,7 @@ class StubGenerator: public StubCodeGenerator {
     StubCodeMark mark(this, stub_id);
     address start = __ pc();
 
+    __ dmb(Assembler::ST);
     generate_cont_thaw(Continuation::thaw_return_barrier_exception);
 
     return start;
@@ -10595,6 +10601,7 @@ class StubGenerator: public StubCodeGenerator {
     StubCodeMark mark(this, stub_id);
     address start = __ pc();
 
+    __ dmb(Assembler::SY);
     __ reset_last_Java_frame(true);
 
     // Set sp to enterSpecial frame, i.e. remove all frames copied into the heap.
