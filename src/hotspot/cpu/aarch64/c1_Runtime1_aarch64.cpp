@@ -58,11 +58,6 @@ int StubAssembler::call_RT(Register oop_result1, Register metadata_result, addre
   assert(args_size >= 0, "illegal args_size");
   bool align_stack = false;
 
-  // Reload rthread before passing it as argument since it might be stale after
-  // a virtual thread continuation yield in a previous call
-  get_thread(rthread);
-  // Memory barrier to ensure thread value is fully visible on Windows AArch64
-  dmb(Assembler::ISH);
   mov(c_rarg0, rthread);
   set_num_rt_args(0); // Nothing on stack
 
@@ -74,11 +69,6 @@ int StubAssembler::call_RT(Register oop_result1, Register metadata_result, addre
   blr(rscratch1);
   bind(retaddr);
   int call_offset = offset();
-
-  // Reload rthread after call since it might have changed due to
-  // virtual thread mount/unmount operations triggered by continuation yield
-  get_thread(rthread);
-
   // verify callee-saved register
 #ifdef ASSERT
   push(r0, sp);
@@ -134,7 +124,6 @@ int StubAssembler::call_RT(Register oop_result1, Register metadata_result, addre
 
 
 int StubAssembler::call_RT(Register oop_result1, Register metadata_result, address entry, Register arg1, Register arg2) {
-  dmb(Assembler::ISH);
   if (c_rarg1 == arg2) {
     if (c_rarg2 == arg1) {
       mov(rscratch1, arg1);
@@ -321,10 +310,7 @@ static void restore_live_registers(StubAssembler* sasm, bool restore_fpu_registe
     __ add(sp, sp, 32 * wordSize);
   }
 
-  // Restore all registers including r28, but then reload r28 (rthread) with fresh value
-  // because it may have changed during virtual thread mount/unmount operations
   __ pop(RegSet::range(r0, r29), sp);
-  __ get_thread(rthread);
 }
 
 static void restore_live_registers_except_r0(StubAssembler* sasm, bool restore_fpu_registers = true)  {
@@ -337,11 +323,8 @@ static void restore_live_registers_except_r0(StubAssembler* sasm, bool restore_f
     __ add(sp, sp, 32 * wordSize);
   }
 
-  // Restore all registers except r0 (return value), but then reload r28 (rthread)
-  // because it may have changed during virtual thread mount/unmount operations
   __ ldp(zr, r1, Address(__ post(sp, 16)));
   __ pop(RegSet::range(r2, r29), sp);
-  __ get_thread(rthread);
 }
 
 
@@ -600,11 +583,6 @@ OopMapSet* Runtime1::generate_patching(StubAssembler* sasm, address target) {
 
   OopMap* oop_map = save_live_registers(sasm);
 
-  // Reload rthread before using it since it might be stale after
-  // a virtual thread continuation yield
-  __ get_thread(rthread);
-  // Memory barrier to ensure thread value is fully visible on Windows AArch64
-  __ dmb(Assembler::ISH);
   __ mov(c_rarg0, rthread);
   Label retaddr;
   __ set_last_Java_frame(sp, rfp, retaddr, rscratch1);

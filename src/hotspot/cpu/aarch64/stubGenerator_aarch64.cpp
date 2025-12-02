@@ -10542,15 +10542,11 @@ class StubGenerator: public StubCodeGenerator {
       __ mov(r0, r19); // restore return value containing the exception oop
       __ verify_oop(r0);
 
-      // Update rthread to current thread since thawed frames have stale cached rthread
-      __ get_thread(rthread);
       __ leave();
       __ mov(r3, lr);
       __ br(r1); // the exception handler
     } else {
       // We're "returning" into the topmost thawed frame; see Thaw::push_return_frame
-      // Update rthread to current thread since thawed frames have stale cached rthread
-      __ get_thread(rthread);
       __ leave();
       __ ret(lr);
     }
@@ -10598,10 +10594,8 @@ class StubGenerator: public StubCodeGenerator {
     StubGenStubId stub_id = StubGenStubId::cont_preempt_id;
     StubCodeMark mark(this, stub_id);
     address start = __ pc();
-    __ get_thread(rthread);
 
     __ reset_last_Java_frame(true);
-    __ get_thread(rthread);
 
     // Set sp to enterSpecial frame, i.e. remove all frames copied into the heap.
     __ ldr(rscratch2, Address(rthread, JavaThread::cont_entry_offset()));
@@ -10618,7 +10612,6 @@ class StubGenerator: public StubCodeGenerator {
 
     // We acquired the monitor after freezing the frames so call thaw to continue execution.
     __ bind(preemption_cancelled);
-    __ get_thread(rthread);
     __ strb(zr, Address(rthread, JavaThread::preemption_cancelled_offset()));
     __ lea(rfp, Address(sp, checked_cast<int32_t>(ContinuationEntry::size())));
     __ lea(rscratch1, ExternalAddress(ContinuationEntry::thaw_call_pc_address()));
