@@ -2502,6 +2502,7 @@ intptr_t* ThawBase::handle_preempted_continuation(intptr_t* sp, Continuation::pr
     // we need to adjust the current thread saved in the stub frame before restoring registers.
     if (TestFlag1) {
       JavaThread** thread_addr = frame::saved_thread_address(top);
+      JavaThread* old_thread = *thread_addr;
       if (thread_addr != nullptr) {
         log_develop_debug(continuations)("ThawBase::handle_preempted_continuation changing current thread saved in the stub frame from " INTPTR_FORMAT " to " INTPTR_FORMAT " with pc " INTPTR_FORMAT " sp " INTPTR_FORMAT, p2i(*thread_addr), p2i(_thread), p2i(top.pc()), p2i(top.sp()));
         *thread_addr = _thread;
@@ -2532,11 +2533,29 @@ intptr_t* ThawBase::handle_preempted_continuation(intptr_t* sp, Continuation::pr
         }
 
 #if defined(_WIN32) && defined(_M_ARM64)
-        // also need to adjust the value of x0 (current)
-        thread_addr = frame::saved_r0_address(top);
-        assert(thread_addr != nullptr, "invalid r0 value in ThawBase::handle_preempted_continuation");
-        log_develop_debug(continuations)("ThawBase::handle_preempted_continuation changing r0 saved in the stub frame at " INTPTR_FORMAT " from " INTPTR_FORMAT " to " INTPTR_FORMAT " with pc " INTPTR_FORMAT " and frame size %d", p2i(thread_addr), p2i(*thread_addr), p2i(_thread), p2i(top.pc()), top.cb()->frame_size());
-        *thread_addr = _thread;
+        if (TestFlag4) {
+          if (thread_addr != nullptr) {
+            int num_slots = TestFlag5 ? 64 : 128;
+            int start = TestFlag3 ? 0 : -num_slots;
+            for (int i = start; i < num_slots; i++) {
+              if (thread_addr[i] == old_thread) {
+                log_develop_debug(continuations)("ThawBase::handle_preempted_continuation replacing address at top.sp()[%d]=" INTPTR_FORMAT
+                  " at address " INTPTR_FORMAT
+                  " and pc " INTPTR_FORMAT
+                  " and sp " INTPTR_FORMAT,
+                  " with " INTPTR_FORMAT,
+                  i, p2i(thread_addr[i]), p2i(&thread_addr[i]), p2i(top.pc()), p2i(top.sp()), p2i(_thread));
+                thread_addr[i] = _thread;
+              }
+            }
+          }
+        } else {
+          // also need to adjust the value of x0 (current)
+          thread_addr = frame::saved_r0_address(top);
+          assert(thread_addr != nullptr, "invalid r0 value in ThawBase::handle_preempted_continuation");
+          log_develop_debug(continuations)("ThawBase::handle_preempted_continuation changing r0 saved in the stub frame at " INTPTR_FORMAT " from " INTPTR_FORMAT " to " INTPTR_FORMAT " with pc " INTPTR_FORMAT " and frame size %d", p2i(thread_addr), p2i(*thread_addr), p2i(_thread), p2i(top.pc()), top.cb()->frame_size());
+          *thread_addr = _thread;
+        }
 #endif
       }
 #endif
