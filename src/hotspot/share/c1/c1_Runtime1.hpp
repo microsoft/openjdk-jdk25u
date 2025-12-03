@@ -77,6 +77,7 @@ public:
   static uint _throw_class_cast_exception_count;
   static uint _throw_incompatible_class_change_error_count;
   static uint _throw_count;
+  static address _monitorenter_stub_entrypoint;
 #endif
 
  private:

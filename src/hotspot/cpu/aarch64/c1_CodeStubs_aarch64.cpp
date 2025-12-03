@@ -202,6 +202,14 @@ void MonitorEnterStub::emit_code(LIR_Assembler* ce) {
   __ dmb(Assembler::OSHLD);
   __ dmb(Assembler::OSHLD);
   __ dmb(Assembler::OSHLD);
+  if (SaveMonitorEnterStubEntry) {
+    __ adr(rscratch1, _entry);
+    __ lea(rscratch2, ExternalAddress((address)&Runtime1::_monitorenter_stub_entrypoint));
+    __ str(rscratch1, Address(rscratch2));
+    __ dmb(Assembler::NSH);
+    __ dmb(Assembler::NSH);
+    __ dmb(Assembler::NSH);
+  }
   ce->store_parameter(_obj_reg->as_register(),  1);
   __ dmb(Assembler::ISHLD);
   __ dmb(Assembler::ISHLD);

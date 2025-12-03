@@ -132,6 +132,7 @@ uint Runtime1::_throw_null_pointer_exception_count = 0;
 uint Runtime1::_throw_class_cast_exception_count = 0;
 uint Runtime1::_throw_incompatible_class_change_error_count = 0;
 uint Runtime1::_throw_count = 0;
+address Runtime1::_monitorenter_stub_entrypoint = (address)nullptr;
 
 static uint _byte_arraycopy_stub_cnt = 0;
 static uint _short_arraycopy_stub_cnt = 0;

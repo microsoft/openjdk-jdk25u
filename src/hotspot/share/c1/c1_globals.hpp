@@ -309,7 +309,11 @@
           "Update MethodData*s in Tier 3 C1 generated code")                \
                                                                             \
   develop(bool, PrintCFGToFile, false,                                      \
-          "print control flow graph to a separate file during compilation")
+          "print control flow graph to a separate file during compilation") \
+                                                                            \
+  develop(bool, SaveMonitorEnterStubEntry, true,                            \
+          "save the monitor enter stub entry point for debugging")          \
+                                                                            \
 
 // end of C1_FLAGS
 
