@@ -2605,9 +2605,11 @@ VMReg SharedRuntime::thread_register() {
   return rthread->as_VMReg();
 }
 
+#if defined(_WIN32) && defined(_M_ARM64)
 VMReg SharedRuntime::c_rarg0_register() {
   return c_rarg0->as_VMReg();
 }
+#endif
 
 //------------------------------generate_handler_blob------
 //
