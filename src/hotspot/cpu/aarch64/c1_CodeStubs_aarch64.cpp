@@ -199,16 +199,35 @@ void NewObjectArrayStub::emit_code(LIR_Assembler* ce) {
 void MonitorEnterStub::emit_code(LIR_Assembler* ce) {
   assert(__ rsp_offset() == 0, "frame size should be fixed");
   __ bind(_entry);
+  __ dmb(Assembler::OSHLD);
+  __ dmb(Assembler::OSHLD);
+  __ dmb(Assembler::OSHLD);
   ce->store_parameter(_obj_reg->as_register(),  1);
+  __ dmb(Assembler::ISHLD);
+  __ dmb(Assembler::ISHLD);
+  __ dmb(Assembler::ISHLD);
   ce->store_parameter(_lock_reg->as_register(), 0);
+  __ dmb(Assembler::OSHST);
+  __ dmb(Assembler::OSHST);
+  __ dmb(Assembler::OSHST);
   C1StubId enter_id;
   if (ce->compilation()->has_fpu_code()) {
     enter_id = C1StubId::monitorenter_id;
   } else {
     enter_id = C1StubId::monitorenter_nofpu_id;
   }
+  __ dmb(Assembler::ISHST);
+  __ dmb(Assembler::ISHST);
+  __ dmb(Assembler::ISHST);
+  __ dmb(Assembler::ISHST);
   __ far_call(RuntimeAddress(Runtime1::entry_for(enter_id)));
+  __ dmb(Assembler::OSH);
+  __ dmb(Assembler::OSH);
+  __ dmb(Assembler::OSH);
   ce->add_call_info_here(_info);
+  __ dmb(Assembler::NSH);
+  __ dmb(Assembler::NSH);
+  __ dmb(Assembler::NSH);
   ce->verify_oop_map(_info);
   // After returning from the runtime stub, reload rthread (r28) to ensure it's current
   // in case virtual thread migration occurred during the call. This is critical on
