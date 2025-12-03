@@ -210,7 +210,23 @@ void MonitorEnterStub::emit_code(LIR_Assembler* ce) {
   __ far_call(RuntimeAddress(Runtime1::entry_for(enter_id)));
   ce->add_call_info_here(_info);
   ce->verify_oop_map(_info);
+  // After returning from the runtime stub, reload rthread (r28) to ensure it's current
+  // in case virtual thread migration occurred during the call. This is critical on
+  // Windows AArch64 where virtual threads can migrate between carrier threads.
+  __ dmb(Assembler::LD);
+  __ dmb(Assembler::LD);
+  __ dmb(Assembler::LD);
+  __ dmb(Assembler::LD);
+  __ get_thread(rthread);
+  __ dmb(Assembler::ISH);
+  __ dmb(Assembler::ISH);
+  __ dmb(Assembler::ISH);
+  __ dmb(Assembler::ISH);
   __ b(_continuation);
+  __ dmb(Assembler::ST);
+  __ dmb(Assembler::ST);
+  __ dmb(Assembler::ST);
+  __ dmb(Assembler::ST);
 }
 
 
@@ -228,7 +244,15 @@ void MonitorExitStub::emit_code(LIR_Assembler* ce) {
   } else {
     exit_id = C1StubId::monitorexit_nofpu_id;
   }
+  __ dmb(Assembler::LD);
+  __ dmb(Assembler::LD);
+  __ dmb(Assembler::LD);
+  __ dmb(Assembler::LD);
   __ adr(lr, _continuation);
+  __ dmb(Assembler::ST);
+  __ dmb(Assembler::ST);
+  __ dmb(Assembler::ST);
+  __ dmb(Assembler::ST);
   __ far_jump(RuntimeAddress(Runtime1::entry_for(exit_id)));
 }
 
