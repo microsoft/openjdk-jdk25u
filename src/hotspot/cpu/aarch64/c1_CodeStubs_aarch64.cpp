@@ -251,11 +251,22 @@ void MonitorEnterStub::emit_code(LIR_Assembler* ce) {
 
 void MonitorExitStub::emit_code(LIR_Assembler* ce) {
   __ bind(_entry);
+  __ dmb(Assembler::NSH);
+  __ dmb(Assembler::NSH);
+  __ dmb(Assembler::NSH);
+  __ dmb(Assembler::NSH);
   if (_compute_lock) {
     // lock_reg was destroyed by fast unlocking attempt => recompute it
     ce->monitor_address(_monitor_ix, _lock_reg);
   }
+  __ dmb(Assembler::OSH);
+  __ dmb(Assembler::OSH);
+  __ dmb(Assembler::OSH);
   ce->store_parameter(_lock_reg->as_register(), 0);
+  __ dmb(Assembler::ISHST);
+  __ dmb(Assembler::ISHST);
+  __ dmb(Assembler::ISHST);
+  __ dmb(Assembler::ISHST);
   // note: non-blocking leaf routine => no call info needed
   C1StubId exit_id;
   if (ce->compilation()->has_fpu_code()) {
