@@ -2039,6 +2039,36 @@ const int ObjectAlignmentInBytes = 8;
                                                                             \
   develop(bool, TestFlagA, false,                                           \
           "A test flag for development purposes")                           \
+                                                                            \
+  develop(bool, TestFlag10, false,                                          \
+          "A test flag for development purposes")                           \
+                                                                            \
+  develop(bool, TestFlag11, false,                                          \
+          "A test flag for development purposes")                           \
+                                                                            \
+  develop(bool, TestFlag12, false,                                          \
+          "A test flag for development purposes")                           \
+                                                                            \
+  develop(bool, TestFlag13, false,                                          \
+          "A test flag for development purposes")                           \
+                                                                            \
+  develop(bool, TestFlag14, false,                                          \
+          "A test flag for development purposes")                           \
+                                                                            \
+  develop(bool, TestFlag15, false,                                          \
+          "A test flag for development purposes")                           \
+                                                                            \
+  develop(bool, TestFlag16, false,                                          \
+          "A test flag for development purposes")                           \
+                                                                            \
+  develop(bool, TestFlag17, false,                                          \
+          "A test flag for development purposes")                           \
+                                                                            \
+  develop(bool, TestFlag18, false,                                          \
+          "A test flag for development purposes")                           \
+                                                                            \
+  develop(bool, TestFlag19, false,                                          \
+          "A test flag for development purposes")                           \
 
 // end of RUNTIME_FLAGS
 

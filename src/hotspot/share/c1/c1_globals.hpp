@@ -314,6 +314,96 @@
   develop(bool, SaveMonitorEnterStubEntry, true,                            \
           "save the monitor enter stub entry point for debugging")          \
                                                                             \
+  develop(bool, DMB01, false,                                               \
+          "A test flag for development purposes")                           \
+                                                                            \
+  develop(bool, DMB02, false,                                               \
+          "A test flag for development purposes")                           \
+                                                                            \
+  develop(bool, DMB03, false,                                               \
+          "A test flag for development purposes")                           \
+                                                                            \
+  develop(bool, DMB04, false,                                               \
+          "A test flag for development purposes")                           \
+                                                                            \
+  develop(bool, DMB05, false,                                               \
+          "A test flag for development purposes")                           \
+                                                                            \
+  develop(bool, DMB06, false,                                               \
+          "A test flag for development purposes")                           \
+                                                                            \
+  develop(bool, DMB07, false,                                               \
+          "A test flag for development purposes")                           \
+                                                                            \
+  develop(bool, DMB08, false,                                               \
+          "A test flag for development purposes")                           \
+                                                                            \
+  develop(bool, DMB09, false,                                               \
+          "A test flag for development purposes")                           \
+                                                                            \
+  develop(bool, DMB10, false,                                               \
+          "A test flag for development purposes")                           \
+                                                                            \
+  develop(bool, DMB11, false,                                               \
+          "A test flag for development purposes")                           \
+                                                                            \
+  develop(bool, DMB12, false,                                               \
+          "A test flag for development purposes")                           \
+                                                                            \
+  develop(bool, DMB13, false,                                               \
+          "A test flag for development purposes")                           \
+                                                                            \
+  develop(bool, DMB14, false,                                               \
+          "A test flag for development purposes")                           \
+                                                                            \
+  develop(bool, DMB15, false,                                               \
+          "A test flag for development purposes")                           \
+                                                                            \
+  develop(bool, DMB16, false,                                               \
+          "A test flag for development purposes")                           \
+                                                                            \
+  develop(bool, DMB17, false,                                               \
+          "A test flag for development purposes")                           \
+                                                                            \
+  develop(bool, DMB18, false,                                               \
+          "A test flag for development purposes")                           \
+                                                                            \
+  develop(bool, DMB19, false,                                               \
+          "A test flag for development purposes")                           \
+                                                                            \
+  develop(bool, DMB20, false,                                               \
+          "A test flag for development purposes")                           \
+                                                                            \
+  develop(bool, DMB21, false,                                               \
+          "A test flag for development purposes")                           \
+                                                                            \
+  develop(bool, DMB22, false,                                               \
+          "A test flag for development purposes")                           \
+                                                                            \
+  develop(bool, DMB23, false,                                               \
+          "A test flag for development purposes")                           \
+                                                                            \
+  develop(bool, DMB24, false,                                               \
+          "A test flag for development purposes")                           \
+                                                                            \
+  develop(bool, DMB25, false,                                               \
+          "A test flag for development purposes")                           \
+                                                                            \
+  develop(bool, DMB26, false,                                               \
+          "A test flag for development purposes")                           \
+                                                                            \
+  develop(bool, DMB27, false,                                               \
+          "A test flag for development purposes")                           \
+                                                                            \
+  develop(bool, DMB28, false,                                               \
+          "A test flag for development purposes")                           \
+                                                                            \
+  develop(bool, DMB29, false,                                               \
+          "A test flag for development purposes")                           \
+                                                                            \
+  develop(bool, DMB30, false,                                               \
+          "A test flag for development purposes")                           \
+                                                                            \
 
 // end of C1_FLAGS
 
