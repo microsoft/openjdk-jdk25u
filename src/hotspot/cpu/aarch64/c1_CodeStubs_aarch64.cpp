@@ -199,9 +199,11 @@ void NewObjectArrayStub::emit_code(LIR_Assembler* ce) {
 void MonitorEnterStub::emit_code(LIR_Assembler* ce) {
   assert(__ rsp_offset() == 0, "frame size should be fixed");
   __ bind(_entry);
-  __ dmb(Assembler::OSHLD);
-  __ dmb(Assembler::OSHLD);
-  __ dmb(Assembler::OSHLD);
+  if (DMB01) {
+    __ dmb(Assembler::OSHLD);
+    __ dmb(Assembler::OSHLD);
+    __ dmb(Assembler::OSHLD);
+  }
   if (SaveMonitorEnterStubEntry) {
     __ adr(rscratch1, _entry);
     __ lea(rscratch2, ExternalAddress((address)&Runtime1::_monitorenter_stub_entrypoint));
@@ -211,70 +213,92 @@ void MonitorEnterStub::emit_code(LIR_Assembler* ce) {
     __ dmb(Assembler::NSH);
   }
   ce->store_parameter(_obj_reg->as_register(),  1);
-  __ dmb(Assembler::ISHLD);
-  __ dmb(Assembler::ISHLD);
-  __ dmb(Assembler::ISHLD);
+  if (DMB02) {
+    __ dmb(Assembler::ISHLD);
+    __ dmb(Assembler::ISHLD);
+    __ dmb(Assembler::ISHLD);
+  }
   ce->store_parameter(_lock_reg->as_register(), 0);
-  __ dmb(Assembler::OSHST);
-  __ dmb(Assembler::OSHST);
-  __ dmb(Assembler::OSHST);
+  if (DMB03) {
+    __ dmb(Assembler::OSHST);
+    __ dmb(Assembler::OSHST);
+    __ dmb(Assembler::OSHST);
+  }
   C1StubId enter_id;
   if (ce->compilation()->has_fpu_code()) {
     enter_id = C1StubId::monitorenter_id;
   } else {
     enter_id = C1StubId::monitorenter_nofpu_id;
   }
-  __ dmb(Assembler::ISHST);
-  __ dmb(Assembler::ISHST);
-  __ dmb(Assembler::ISHST);
-  __ dmb(Assembler::ISHST);
+  if (DMB04) {
+    __ dmb(Assembler::ISHST);
+    __ dmb(Assembler::ISHST);
+    __ dmb(Assembler::ISHST);
+    __ dmb(Assembler::ISHST);
+  }
   __ far_call(RuntimeAddress(Runtime1::entry_for(enter_id)));
-  __ dmb(Assembler::OSH);
-  __ dmb(Assembler::OSH);
-  __ dmb(Assembler::OSH);
+  if (DMB05) {
+    __ dmb(Assembler::OSH);
+    __ dmb(Assembler::OSH);
+    __ dmb(Assembler::OSH);
+  }
   ce->add_call_info_here(_info);
-  __ dmb(Assembler::NSH);
-  __ dmb(Assembler::NSH);
-  __ dmb(Assembler::NSH);
+  if (DMB06) {
+    __ dmb(Assembler::NSH);
+    __ dmb(Assembler::NSH);
+    __ dmb(Assembler::NSH);
+  }
   ce->verify_oop_map(_info);
   // After returning from the runtime stub, reload rthread (r28) to ensure it's current
   // in case virtual thread migration occurred during the call. This is critical on
   // Windows AArch64 where virtual threads can migrate between carrier threads.
-  __ dmb(Assembler::LD);
-  __ dmb(Assembler::LD);
-  __ dmb(Assembler::LD);
-  __ dmb(Assembler::LD);
+  if (DMB07) {
+    __ dmb(Assembler::LD);
+    __ dmb(Assembler::LD);
+    __ dmb(Assembler::LD);
+    __ dmb(Assembler::LD);
+  }
   __ get_thread(rthread);
-  __ dmb(Assembler::ISH);
-  __ dmb(Assembler::ISH);
-  __ dmb(Assembler::ISH);
-  __ dmb(Assembler::ISH);
+  if (DMB08) {
+    __ dmb(Assembler::ISH);
+    __ dmb(Assembler::ISH);
+    __ dmb(Assembler::ISH);
+    __ dmb(Assembler::ISH);
+  }
   __ b(_continuation);
-  __ dmb(Assembler::ST);
-  __ dmb(Assembler::ST);
-  __ dmb(Assembler::ST);
-  __ dmb(Assembler::ST);
+  if (DMB09) {
+    __ dmb(Assembler::ST);
+    __ dmb(Assembler::ST);
+    __ dmb(Assembler::ST);
+    __ dmb(Assembler::ST);
+  }
 }
 
 
 void MonitorExitStub::emit_code(LIR_Assembler* ce) {
   __ bind(_entry);
-  __ dmb(Assembler::NSH);
-  __ dmb(Assembler::NSH);
-  __ dmb(Assembler::NSH);
-  __ dmb(Assembler::NSH);
+  if (DMB10) {
+    __ dmb(Assembler::NSH);
+    __ dmb(Assembler::NSH);
+    __ dmb(Assembler::NSH);
+    __ dmb(Assembler::NSH);
+  }
   if (_compute_lock) {
     // lock_reg was destroyed by fast unlocking attempt => recompute it
     ce->monitor_address(_monitor_ix, _lock_reg);
   }
-  __ dmb(Assembler::OSH);
-  __ dmb(Assembler::OSH);
-  __ dmb(Assembler::OSH);
+  if (DMB11) {
+    __ dmb(Assembler::OSH);
+    __ dmb(Assembler::OSH);
+    __ dmb(Assembler::OSH);
+  }
   ce->store_parameter(_lock_reg->as_register(), 0);
-  __ dmb(Assembler::ISHST);
-  __ dmb(Assembler::ISHST);
-  __ dmb(Assembler::ISHST);
-  __ dmb(Assembler::ISHST);
+  if (DMB12) {
+    __ dmb(Assembler::ISHST);
+    __ dmb(Assembler::ISHST);
+    __ dmb(Assembler::ISHST);
+    __ dmb(Assembler::ISHST);
+  }
   // note: non-blocking leaf routine => no call info needed
   C1StubId exit_id;
   if (ce->compilation()->has_fpu_code()) {
@@ -282,15 +306,19 @@ void MonitorExitStub::emit_code(LIR_Assembler* ce) {
   } else {
     exit_id = C1StubId::monitorexit_nofpu_id;
   }
-  __ dmb(Assembler::LD);
-  __ dmb(Assembler::LD);
-  __ dmb(Assembler::LD);
-  __ dmb(Assembler::LD);
+  if (DMB13) {
+    __ dmb(Assembler::LD);
+    __ dmb(Assembler::LD);
+    __ dmb(Assembler::LD);
+    __ dmb(Assembler::LD);
+  }
   __ adr(lr, _continuation);
-  __ dmb(Assembler::ST);
-  __ dmb(Assembler::ST);
-  __ dmb(Assembler::ST);
-  __ dmb(Assembler::ST);
+  if (DMB14) {
+    __ dmb(Assembler::ST);
+    __ dmb(Assembler::ST);
+    __ dmb(Assembler::ST);
+    __ dmb(Assembler::ST);
+  }
   __ far_jump(RuntimeAddress(Runtime1::entry_for(exit_id)));
 }
 
