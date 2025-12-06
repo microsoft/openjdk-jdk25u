@@ -288,7 +288,7 @@ inline intptr_t* ThawBase::align(const frame& hf, intptr_t* frame_sp, frame& cal
 
 inline void ThawBase::patch_pd(frame& f, const frame& caller) {
   patch_callee_link(caller, caller.fp());
-  
+  /*
   // Patch saved r28 (rthread) values in compiled frames to current thread
   // When virtual threads migrate between carriers, frozen frames contain stale thread pointers
   if (f.is_compiled_frame() && f.oop_map() != nullptr) {
@@ -307,6 +307,7 @@ inline void ThawBase::patch_pd(frame& f, const frame& caller) {
       }
     }
   }
+  */
 }
 
 inline void ThawBase::patch_pd(frame& f, intptr_t* caller_sp) {
