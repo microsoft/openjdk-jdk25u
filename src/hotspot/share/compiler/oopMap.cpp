@@ -495,7 +495,9 @@ void ImmutableOopMap::all_type_do(const frame *fr, OopMapValue::oop_types type, 
 
 static void update_register_map1(const ImmutableOopMap* oopmap, const frame* fr, RegisterMap* reg_map, bool thawing) {
   int locations = 0;
+  int iterations = 0;
   for (OopMapStream oms(oopmap); !oms.is_done(); oms.next()) {
+    iterations++;
     OopMapValue omv = oms.current();
     if (omv.type() == OopMapValue::callee_saved_value) {
       VMReg reg = omv.content_reg();
@@ -510,7 +512,7 @@ static void update_register_map1(const ImmutableOopMap* oopmap, const frame* fr,
   }
 
   if (thawing) {
-    log_develop_debug(continuations)("update_register_map1 updated %d locations", locations);
+    log_develop_debug(continuations)("update_register_map1 updated %d locations after %d iterations", locations, iterations);
   }
 }
 
