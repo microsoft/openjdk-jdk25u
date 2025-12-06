@@ -248,7 +248,7 @@ class OopMapSet : public ResourceObj {
                                   const RegisterMap* reg_map,
                                   OopClosure* f,
                                   DerivedPointerIterationMode mode);
-  static void update_register_map(const frame* fr, RegisterMap *reg_map);
+  static void update_register_map(const frame* fr, RegisterMap *reg_map, bool thawing = false);
 
 #ifndef PRODUCT
   static void trace_codeblob_maps(const frame *fr, const RegisterMap *reg_map);
@@ -298,7 +298,7 @@ public:
   void oops_do(const frame* fr, const RegisterMap* reg_map, OopClosure* f, DerivedPointerIterationMode derived_mode) const;
   void all_type_do(const frame *fr, OopMapValue::oop_types type, OopMapClosure* fn) const;
   void all_type_do(const frame *fr, OopMapClosure* fn) const;
-  void update_register_map(const frame* fr, RegisterMap *reg_map) const;
+  void update_register_map(const frame* fr, RegisterMap *reg_map, bool thawing = false) const;
 
   // Printing
   void print_on(outputStream* st) const;

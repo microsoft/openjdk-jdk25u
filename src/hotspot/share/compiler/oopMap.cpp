@@ -493,19 +493,23 @@ void ImmutableOopMap::all_type_do(const frame *fr, OopMapValue::oop_types type, 
   }
 }
 
-static void update_register_map1(const ImmutableOopMap* oopmap, const frame* fr, RegisterMap* reg_map) {
+static void update_register_map1(const ImmutableOopMap* oopmap, const frame* fr, RegisterMap* reg_map, bool thawing) {
   for (OopMapStream oms(oopmap); !oms.is_done(); oms.next()) {
     OopMapValue omv = oms.current();
     if (omv.type() == OopMapValue::callee_saved_value) {
       VMReg reg = omv.content_reg();
       address loc = fr->oopmapreg_to_location(omv.reg(), reg_map);
       reg_map->set_location(reg, loc);
+      if (thawing) {
+        log_develop_debug(continuations)("update_register_map1 set location for reg to " INTPTR_FORMAT "reg->is_reg() == %d reg->name() == %s reg->value() = %d",
+                                        p2i(loc), reg->is_reg(), reg->name(), reg->value());
+      }
     }
   }
 }
 
 // Update callee-saved register info for the following frame
-void ImmutableOopMap::update_register_map(const frame *fr, RegisterMap *reg_map) const {
+void ImmutableOopMap::update_register_map(const frame *fr, RegisterMap *reg_map, bool thawing) const {
   CodeBlob* cb = fr->cb();
   assert(cb != nullptr, "no codeblob");
   // Any reg might be saved by a safepoint handler (see generate_handler_blob).
@@ -521,7 +525,7 @@ void ImmutableOopMap::update_register_map(const frame *fr, RegisterMap *reg_map)
   // Scan through oopmap and find location of all callee-saved registers
   // (we do not do update in place, since info could be overwritten)
 
-  update_register_map1(this, fr, reg_map);
+  update_register_map1(this, fr, reg_map, thawing);
 }
 
 const ImmutableOopMap* OopMapSet::find_map(const frame *fr) {
@@ -536,8 +540,8 @@ const ImmutableOopMap* OopMapSet::find_map(const CodeBlob* cb, address pc) {
 }
 
 // Update callee-saved register info for the following frame
-void OopMapSet::update_register_map(const frame *fr, RegisterMap *reg_map) {
-  find_map(fr)->update_register_map(fr, reg_map);
+void OopMapSet::update_register_map(const frame *fr, RegisterMap *reg_map, bool thawing) {
+  find_map(fr)->update_register_map(fr, reg_map, thawing);
 }
 
 //=============================================================================

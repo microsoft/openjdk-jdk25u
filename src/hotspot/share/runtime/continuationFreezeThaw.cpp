@@ -2752,7 +2752,7 @@ void ThawBase::recurse_thaw_stub_frame(const frame& hf, frame& caller, int num_f
                   RegisterMap::ProcessFrames::skip,
                   RegisterMap::WalkContinuation::skip);
   map.set_include_argument_oops(false);
-  f.oop_map()->update_register_map(&f, &map);
+  f.oop_map()->update_register_map(&f, &map, true /* thawing */);
   ContinuationHelper::update_register_map_with_callee(caller, &map);
   _cont.tail()->fix_thawed_frame(caller, &map);
 
