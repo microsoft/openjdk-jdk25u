@@ -2752,6 +2752,15 @@ void ThawBase::recurse_thaw_stub_frame(const frame& hf, frame& caller, int num_f
                   RegisterMap::ProcessFrames::skip,
                   RegisterMap::WalkContinuation::skip);
   map.set_include_argument_oops(false);
+
+  const ImmutableOopMap* oop_map_result = f.oop_map();
+  int oop_map_entry_count = 0;
+  if (oop_map_result != nullptr) {
+    for (OopMapStream oms(oop_map_result); !oms.is_done(); oms.next()) { oop_map_entry_count++; }
+  }
+  log_develop_debug(continuations)("recurse_thaw_stub_frame: f.pc() = " INTPTR_FORMAT ", f.oop_map() = " INTPTR_FORMAT ", oop_map_entry_count = %d",
+                                   p2i(f.pc()), p2i(oop_map_result), oop_map_entry_count);
+
   f.oop_map()->update_register_map(&f, &map, true /* thawing */);
   ContinuationHelper::update_register_map_with_callee(caller, &map);
   _cont.tail()->fix_thawed_frame(caller, &map);
