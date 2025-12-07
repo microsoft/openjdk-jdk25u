@@ -251,23 +251,31 @@ static int fpu_reg_save_offsets[FrameMap::nof_fpu_regs];
 static int reg_save_size_in_words;
 static int frame_size_in_bytes = -1;
 
-static OopMap* generate_oop_map(StubAssembler* sasm, bool save_fpu_registers) {
+static OopMap* generate_oop_map(StubAssembler* sasm, bool save_fpu_registers, bool is_monitor_enter = false) {
   int frame_size_in_bytes = reg_save_frame_size * BytesPerWord;
   sasm->set_frame_size(frame_size_in_bytes / BytesPerWord);
   int frame_size_in_slots = frame_size_in_bytes / sizeof(jint);
   OopMap* oop_map = new OopMap(frame_size_in_slots, 0);
 
-  for (int i = 0; i < FrameMap::nof_caller_save_cpu_regs(); i++) {
+  int num_caller_save_cpu_regs = FrameMap::nof_caller_save_cpu_regs();
+
+  for (int i = 0; i < num_caller_save_cpu_regs; i++) {
     LIR_Opr opr = FrameMap::caller_save_cpu_reg_at(i);
     Register r = opr->as_register();
     int reg_num = r->encoding();
     int sp_offset = cpu_reg_save_offsets[reg_num];
     oop_map->set_callee_saved(VMRegImpl::stack2reg(cpu_reg_save_offsets[reg_num]), r->as_VMReg());
+    if (is_monitor_enter) {
+      log_develop_debug(continuations)("monitorenter: oop_map->set_callee_saved reg %d ", reg_num);
+    }
   }
 
   Register r = rthread;
   int reg_num = r->encoding();
   oop_map->set_callee_saved(VMRegImpl::stack2reg(cpu_reg_save_offsets[reg_num]), r->as_VMReg());
+  if (is_monitor_enter) {
+    log_develop_debug(continuations)("monitorenter: oop_map->set_callee_saved rthread reg %d ", reg_num);
+  }
 
   if (save_fpu_registers) {
     for (int i = 0; i < FrameMap::nof_fpu_regs; i++) {
@@ -276,6 +284,9 @@ static OopMap* generate_oop_map(StubAssembler* sasm, bool save_fpu_registers) {
         int sp_offset = fpu_reg_save_offsets[i];
         oop_map->set_callee_saved(VMRegImpl::stack2reg(sp_offset),
                                   r->as_VMReg());
+        if (is_monitor_enter) {
+          log_develop_debug(continuations)("monitorenter: oop_map->set_callee_saved FloatRegister %d with VMRegImpl::stack2reg(%d)", i, sp_offset);
+        }
       }
     }
   }
@@ -283,7 +294,7 @@ static OopMap* generate_oop_map(StubAssembler* sasm, bool save_fpu_registers) {
 }
 
 static OopMap* save_live_registers(StubAssembler* sasm,
-                                   bool save_fpu_registers = true) {
+                                   bool save_fpu_registers = true, bool is_monitor_enter = false) {
   __ block_comment("save_live_registers");
 
   __ push(RegSet::range(r0, r29), sp);         // integer registers except lr & sp
@@ -298,7 +309,7 @@ static OopMap* save_live_registers(StubAssembler* sasm,
     __ add(sp, sp, -32 * wordSize);
   }
 
-  return generate_oop_map(sasm, save_fpu_registers);
+  return generate_oop_map(sasm, save_fpu_registers, is_monitor_enter);
 }
 
 static void restore_live_registers(StubAssembler* sasm, bool restore_fpu_registers = true) {
@@ -898,7 +909,7 @@ OopMapSet* Runtime1::generate_code_for(C1StubId id, StubAssembler* sasm) {
     case C1StubId::monitorenter_id:
       {
         StubFrame f(sasm, "monitorenter", dont_gc_arguments, requires_pop_epilogue_return);
-        OopMap* map = save_live_registers(sasm, save_fpu_registers);
+        OopMap* map = save_live_registers(sasm, save_fpu_registers, true);
 
         // Called with store_parameter and not C abi
 
