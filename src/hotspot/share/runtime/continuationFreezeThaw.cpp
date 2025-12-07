@@ -924,18 +924,27 @@ NOINLINE freeze_result FreezeBase::recurse_freeze(frame& f, frame& caller, int c
   if (f.is_compiled_frame()) {
     if (UNLIKELY(f.oop_map() == nullptr)) {
       // special native frame
+      log_develop_debug(continuations)("FreezeBase::recurse_freeze: (1) special native frame");
       return freeze_pinned_native;
     }
+    log_develop_debug(continuations)("FreezeBase::recurse_freeze: (2) calling recurse_freeze_compiled_frame");
     return recurse_freeze_compiled_frame(f, caller, callee_argsize, callee_interpreted);
   } else if (f.is_interpreted_frame()) {
     assert(!f.interpreter_frame_method()->is_native() || (top && _preempt), "");
+    log_develop_debug(continuations)("FreezeBase::recurse_freeze: (3) calling recurse_freeze_interpreted_frame");
     return recurse_freeze_interpreted_frame(f, caller, callee_argsize, callee_interpreted);
   } else if (top && _preempt) {
     assert(f.is_native_frame() || f.is_runtime_frame(), "");
+    if (f.is_native_frame()) {
+      log_develop_debug(continuations)("FreezeBase::recurse_freeze: (4) calling recurse_freeze_native_frame");
+    } else {
+      log_develop_debug(continuations)("FreezeBase::recurse_freeze: (5) calling recurse_freeze_stub_frame");
+    }
     return f.is_native_frame() ? recurse_freeze_native_frame(f, caller) : recurse_freeze_stub_frame(f, caller);
   } else {
     // Frame can't be frozen. Most likely the call_stub or upcall_stub
     // which indicates there are further natives frames up the stack.
+    log_develop_debug(continuations)("FreezeBase::recurse_freeze: (6) returning freeze_pinned_native");
     return freeze_pinned_native;
   }
 }
