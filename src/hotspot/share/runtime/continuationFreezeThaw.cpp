@@ -2342,11 +2342,19 @@ void ThawBase::recurse_thaw(const frame& heap_frame, frame& caller, int num_fram
   assert(num_frames > 0, "");
   assert(!heap_frame.is_empty(), "");
 
+  log_develop_debug(continuations)("ThawBase::recurse_thaw: heap_frame.is_native_frame() = %d heap_frame.is_runtime_frame() = %d heap_frame.is_interpreted_frame() = %d",
+                                   heap_frame.is_native_frame(),
+                                   heap_frame.is_runtime_frame(),
+                                   heap_frame.is_interpreted_frame());
+
   if (top_on_preempt_case && (heap_frame.is_native_frame() || heap_frame.is_runtime_frame())) {
+    log_develop_debug(continuations)("ThawBase::recurse_thaw: executing block 1");
     heap_frame.is_native_frame() ? recurse_thaw_native_frame(heap_frame, caller, 2) : recurse_thaw_stub_frame(heap_frame, caller, 2);
   } else if (!heap_frame.is_interpreted_frame()) {
+    log_develop_debug(continuations)("ThawBase::recurse_thaw: executing block 2");
     recurse_thaw_compiled_frame(heap_frame, caller, num_frames, false);
   } else {
+    log_develop_debug(continuations)("ThawBase::recurse_thaw: executing block 3");
     recurse_thaw_interpreted_frame(heap_frame, caller, num_frames);
   }
 }
@@ -2368,6 +2376,9 @@ bool ThawBase::recurse_thaw_java_frame(frame& caller, int num_frames) {
     log_develop_trace(continuations)("thawing extra compiled frame to not leave a compiled interpreted-caller at top");
     num_frames++;
   }
+
+  log_develop_debug(continuations)("ThawBase::recurse_thaw_java_frame: num_frames = %d",
+                                   num_frames);
 
   if (num_frames == 1 || _stream.is_done()) { // end recursion
     finalize_thaw(caller, FKind::interpreted ? 0 : argsize);
@@ -2400,6 +2411,9 @@ void ThawBase::finalize_thaw(frame& entry, int argsize) {
   assert(entry.sp() == _cont.entrySP(), "");
   assert(Continuation::is_continuation_enterSpecial(entry), "");
   assert(_cont.is_entry_frame(entry), "");
+
+  log_develop_debug(continuations)("ThawBase::finalize_thaw: argsize = %d",
+                                   argsize);
 }
 
 inline void ThawBase::before_thaw_java_frame(const frame& hf, const frame& caller, bool bottom, int num_frame) {
@@ -2812,6 +2826,9 @@ void ThawBase::recurse_thaw_native_frame(const frame& hf, frame& caller, int num
   assert(!f.cb()->as_nmethod()->is_marked_for_deoptimization(), "");
 
   // can only fix caller once this frame is thawed (due to callee saved regs); this happens on the stack
+
+  log_develop_debug(continuations)("ThawBase::recurse_thaw_native_frame: f.pc() = " INTPTR_FORMAT,
+                                   p2i(f.pc()));
   _cont.tail()->fix_thawed_frame(caller, SmallRegisterMap::instance());
 
   DEBUG_ONLY(after_thaw_java_frame(f, false /* bottom */);)
