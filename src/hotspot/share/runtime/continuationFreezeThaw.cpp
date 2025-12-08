@@ -2532,7 +2532,7 @@ intptr_t* ThawBase::handle_preempted_continuation(intptr_t* sp, Continuation::pr
         log_develop_debug(continuations)("ThawBase::handle_preempted_continuation thread_addr == nullptr for _thread " INTPTR_FORMAT " with pc " INTPTR_FORMAT " sp " INTPTR_FORMAT, p2i(_thread), p2i(top.pc()), p2i(top.sp()));
       }
 
-    int num_slots = TestFlag5 ? 64 : 128;
+    int num_slots = TestFlag5 ? 64 : 256;
 #ifdef COMPILER1
       if (TestFlag2) {
         if (thread_addr != nullptr) {
