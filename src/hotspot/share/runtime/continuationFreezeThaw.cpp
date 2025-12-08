@@ -2768,6 +2768,31 @@ void ThawBase::recurse_thaw_stub_frame(const frame& hf, frame& caller, int num_f
 
   patch(f, caller, false /*is_bottom_frame*/);
 
+  // The continuation might now run on a different platform thread than the previous time so
+  // we need to adjust the current thread saved in the stub frame after copying from the heap.
+  // handle_preempted_continuation may have already done this for the fast_case, but the copy
+  // above overwrote that update, so we must do it again here.
+  if (TestFlag8) {
+    intptr_t* from = heap_frame_top - frame::metadata_words;
+    int size = fsize + frame::metadata_words;
+
+    if (from != nullptr) {
+      for (int i = 0; i < size; i++) {
+        log_develop_debug(continuations)("ThawBase::recurse_thaw_stub_frame copy_from_chunk from[" INTPTR_FORMAT "] = " INTPTR_FORMAT,
+                                         p2i(&from[i]), p2i(from[i]));
+      }
+    }
+
+    if (TestFlag9 && _preempted_case) {
+      JavaThread** thread_addr = frame::saved_thread_address(f);
+      if (thread_addr != nullptr) {
+        log_develop_debug(continuations)("recurse_thaw_stub_frame: TestFlag9 updating saved thread from " INTPTR_FORMAT " to " INTPTR_FORMAT,
+                                        p2i(*thread_addr), p2i(_thread));
+        *thread_addr = _thread;
+      }
+    }
+  }
+
   // can only fix caller once this frame is thawed (due to callee saved regs)
   RegisterMap map(nullptr,
                   RegisterMap::UpdateMap::include,
