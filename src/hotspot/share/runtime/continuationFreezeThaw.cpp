@@ -2786,6 +2786,52 @@ void ThawBase::recurse_thaw_stub_frame(const frame& hf, frame& caller, int num_f
 
   f.oop_map()->update_register_map(&f, &map, true /* thawing */);
   ContinuationHelper::update_register_map_with_callee(caller, &map);
+
+  if (TestFlag6) {
+    JavaThread** thread_addr = frame::saved_thread_address(f);
+    JavaThread* old_thread = *thread_addr;
+
+    int locations = 0;
+    int iterations = 0;
+    int updated = 0;
+    frame* frame_for_oopmap_update = TestFlag7 ? &f : &caller;
+    for (OopMapStream oms(frame_for_oopmap_update->oop_map()); !oms.is_done(); oms.next()) {
+      iterations++;
+      OopMapValue omv = oms.current();
+      if (omv.type() == OopMapValue::callee_saved_value) {
+        VMReg reg = omv.content_reg();
+        address loc = frame_for_oopmap_update->oopmapreg_to_location(omv.reg(), &map);
+        locations++;
+
+        if (loc != nullptr) {
+          if (*loc == (intptr_t)_thread) {
+            // This register location contains the current carrier thread pointer,
+            // which is correct - it was already updated by handle_preempted_continuation
+            log_develop_debug(continuations)("recurse_thaw_stub_frame: register %s at " INTPTR_FORMAT " already has new thread " INTPTR_FORMAT,
+                                            reg->name(), p2i(loc), p2i(_thread));
+          } else if (*loc == (intptr_t)old_thread) {
+            // This register location contains the old carrier thread pointer,
+            // so we need to update it to the new thread pointer.
+            log_develop_debug(continuations)("recurse_thaw_stub_frame: updating register %s at " INTPTR_FORMAT " from old thread " INTPTR_FORMAT " to new thread " INTPTR_FORMAT,
+                                            reg->name(), p2i(loc), p2i(old_thread), p2i(_thread));
+            *loc = (intptr_t)_thread;
+            updated++;
+          } else {
+            log_develop_debug(continuations)("recurse_thaw_stub_frame: no update required for register %s at " INTPTR_FORMAT,
+                                            reg->name(), p2i(loc));
+          }
+          log_develop_debug(continuations)("recurse_thaw_stub_frame: *(loc = " INTPTR_FORMAT ") = " INTPTR_FORMAT,
+                                           p2i(loc), *loc);
+        } else {
+          log_develop_debug(continuations)("recurse_thaw_stub_frame: no location found for register %s",
+                                            reg->name());
+        }
+      }
+    }
+
+    log_develop_debug(continuations)("recurse_thaw_stub_frame inspected %d locations and updated %d locations after %d iterations for old_thread " INTPTR_FORMAT " and new thread " INTPTR_FORMAT,
+                                     locations, updated, iterations, p2i(old_thread), p2i(_thread));
+  }
   _cont.tail()->fix_thawed_frame(caller, &map);
 
   DEBUG_ONLY(after_thaw_java_frame(f, false /*is_bottom_frame*/);)
