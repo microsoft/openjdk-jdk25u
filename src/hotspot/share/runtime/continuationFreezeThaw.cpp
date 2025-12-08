@@ -2523,7 +2523,6 @@ intptr_t* ThawBase::handle_preempted_continuation(intptr_t* sp, Continuation::pr
   } else if (top.is_runtime_frame()) {
     // The continuation might now run on a different platform thread than the previous time so
     // we need to adjust the current thread saved in the stub frame before restoring registers.
-    if (TestFlag1) {
       JavaThread** thread_addr = frame::saved_thread_address(top);
       JavaThread* old_thread = *thread_addr;
       if (thread_addr != nullptr) {
@@ -2582,7 +2581,6 @@ intptr_t* ThawBase::handle_preempted_continuation(intptr_t* sp, Continuation::pr
 #endif
       }
 #endif
-    }
   }
   return sp;
 }
