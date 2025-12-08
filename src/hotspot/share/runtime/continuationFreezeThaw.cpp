@@ -2819,7 +2819,7 @@ void ThawBase::recurse_thaw_stub_frame(const frame& hf, frame& caller, int num_f
                                             reg->name(), p2i(loc));
           }
           log_develop_debug(continuations)("recurse_thaw_stub_frame: *(loc = " INTPTR_FORMAT ") = " INTPTR_FORMAT,
-                                           p2i(loc), *loc);
+                                           p2i(loc), (intptr_t)*loc);
         } else {
           log_develop_debug(continuations)("recurse_thaw_stub_frame: no location found for register %s",
                                             reg->name());
@@ -2866,7 +2866,7 @@ void ThawBase::recurse_thaw_stub_frame(const frame& hf, frame& caller, int num_f
                                             reg->name(), p2i(loc));
           }
           log_develop_debug(continuations)("recurse_thaw_stub_frame post fix_thawed_frame: *(loc = " INTPTR_FORMAT ") = " INTPTR_FORMAT,
-                                           p2i(loc), *loc);
+                                           p2i(loc), (intptr_t)*loc);
         } else {
           log_develop_debug(continuations)("recurse_thaw_stub_frame post fix_thawed_frame: no location found for register %s",
                                             reg->name());
@@ -2874,7 +2874,7 @@ void ThawBase::recurse_thaw_stub_frame(const frame& hf, frame& caller, int num_f
       }
     }
 
-    log_develop_debug(continuations)("recurse_thaw_stub_frame inspected %d locations and updated %d locations after %d iterations for old_thread " INTPTR_FORMAT " and new thread " INTPTR_FORMAT,
+    log_develop_debug(continuations)("recurse_thaw_stub_frame post fix_thawed_frame inspected %d locations and updated %d locations after %d iterations for old_thread " INTPTR_FORMAT " and new thread " INTPTR_FORMAT,
                                      locations, updated, iterations, p2i(old_thread), p2i(_thread));
   }
 

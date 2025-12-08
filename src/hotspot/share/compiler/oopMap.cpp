@@ -505,7 +505,7 @@ static void update_register_map1(const ImmutableOopMap* oopmap, const frame* fr,
       reg_map->set_location(reg, loc);
       locations++;
       if (thawing) {
-        log_develop_debug(continuations)("update_register_map1 set location for reg to " INTPTR_FORMAT "reg->is_reg() == %d reg->name() == %s reg->value() = %d",
+        log_develop_debug(continuations)("update_register_map1 set location for reg to " INTPTR_FORMAT " reg->is_reg() == %d reg->name() == %s reg->value() = %d",
                                         p2i(loc), reg->is_reg(), reg->name(), reg->value());
       }
     }
