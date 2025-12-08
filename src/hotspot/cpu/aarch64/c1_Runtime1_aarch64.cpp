@@ -266,7 +266,7 @@ static OopMap* generate_oop_map(StubAssembler* sasm, bool save_fpu_registers, bo
     int sp_offset = cpu_reg_save_offsets[reg_num];
     oop_map->set_callee_saved(VMRegImpl::stack2reg(cpu_reg_save_offsets[reg_num]), r->as_VMReg());
     if (is_monitor_enter) {
-      log_develop_debug(continuations)("monitorenter: oop_map->set_callee_saved reg %d ", reg_num);
+      log_develop_debug(continuations)("monitorenter: oop_map->set_callee_saved reg %d with sp_offset %d. Thread::current() = " INTPTR_FORMAT, reg_num, sp_offset, p2i(Thread::current()));
     }
   }
 
@@ -274,7 +274,7 @@ static OopMap* generate_oop_map(StubAssembler* sasm, bool save_fpu_registers, bo
   int reg_num = r->encoding();
   oop_map->set_callee_saved(VMRegImpl::stack2reg(cpu_reg_save_offsets[reg_num]), r->as_VMReg());
   if (is_monitor_enter) {
-    log_develop_debug(continuations)("monitorenter: oop_map->set_callee_saved rthread reg %d ", reg_num);
+    log_develop_debug(continuations)("monitorenter: oop_map->set_callee_saved rthread reg %d sp_offset %d. Thread::current() = " INTPTR_FORMAT, reg_num, sp_offset, p2i(Thread::current()));
   }
 
   if (save_fpu_registers) {
@@ -285,7 +285,7 @@ static OopMap* generate_oop_map(StubAssembler* sasm, bool save_fpu_registers, bo
         oop_map->set_callee_saved(VMRegImpl::stack2reg(sp_offset),
                                   r->as_VMReg());
         if (is_monitor_enter) {
-          log_develop_debug(continuations)("monitorenter: oop_map->set_callee_saved FloatRegister %d with VMRegImpl::stack2reg(%d)", i, sp_offset);
+          log_develop_debug(continuations)("monitorenter: oop_map->set_callee_saved FloatRegister %d with VMRegImpl::stack2reg(%d). Thread::current() = " INTPTR_FORMAT, i, sp_offset, p2i(Thread::current()));
         }
       }
     }
