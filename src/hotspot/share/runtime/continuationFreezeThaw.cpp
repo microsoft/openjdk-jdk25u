@@ -2779,7 +2779,7 @@ void ThawBase::recurse_thaw_stub_frame(const frame& hf, frame& caller, int num_f
     if (from != nullptr) {
       for (int i = 0; i < size; i++) {
         log_develop_debug(continuations)("ThawBase::recurse_thaw_stub_frame copy_from_chunk from[" INTPTR_FORMAT "] = " INTPTR_FORMAT,
-                                         p2i(&from[i]), p2i(from[i]));
+                                         p2i(&from[i]), p2i((void*)from[i]));
       }
     }
 
