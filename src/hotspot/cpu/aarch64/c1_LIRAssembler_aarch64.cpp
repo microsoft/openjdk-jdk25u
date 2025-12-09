@@ -1994,10 +1994,6 @@ void LIR_Assembler::call(LIR_OpJavaCall* op, relocInfo::relocType rtype) {
   }
   add_call_info(code_offset(), op->info());
   __ post_call_nop();
-
-  // Reload rthread after Java call since it might have changed due to
-  // virtual thread mount/unmount operations triggered by continuation yield
-  __ get_thread(rthread);
 }
 
 
@@ -2009,10 +2005,6 @@ void LIR_Assembler::ic_call(LIR_OpJavaCall* op) {
   }
   add_call_info(code_offset(), op->info());
   __ post_call_nop();
-
-  // Reload rthread after inline cache call since it might have changed due to
-  // virtual thread mount/unmount operations triggered by continuation yield
-  __ get_thread(rthread);
 }
 
 void LIR_Assembler::emit_static_call_stub() {
