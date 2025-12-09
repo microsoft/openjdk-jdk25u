@@ -2786,12 +2786,11 @@ void ThawBase::recurse_thaw_stub_frame(const frame& hf, frame& caller, int num_f
                                          p2i(&from[i]), p2i((void*)from[i]));
 
         if (TestFlag9 && _preempted_case && thread_addr != nullptr) {
-          address loc = (address)(from[i]);
-          if ((address)(from[i]) == (address)thread_addr) {
+          if ((address)(from[i]) == (address)(*thread_addr)) {
             // This register location contains the old carrier thread pointer,
             // so we need to update it to the new thread pointer.
             log_develop_debug(continuations)("recurse_thaw_stub_frame: TestFlag9 updating " INTPTR_FORMAT " to " INTPTR_FORMAT,
-                                            p2i(loc), p2i(_thread));
+                                            p2i((address)(from[i])), p2i(_thread));
             from[i] = (intptr_t)_thread;
           }
         }
