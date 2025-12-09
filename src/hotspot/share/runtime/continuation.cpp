@@ -35,6 +35,7 @@
 #include "runtime/interfaceSupport.inline.hpp"
 #include "runtime/javaThread.inline.hpp"
 #include "runtime/jniHandles.inline.hpp"
+#include "runtime/os.hpp"
 #include "runtime/osThread.hpp"
 #include "runtime/vframe.inline.hpp"
 #include "runtime/vframe_hp.hpp"
@@ -154,10 +155,13 @@ freeze_result Continuation::try_preempt(JavaThread* current, oop continuation) {
     return freeze_pinned_native;
   }
 
+  intx curr_thread_id = os::current_thread_id();
+
   JVMTI_ONLY(JvmtiUnmountBeginMark jubm(current);)
   JVMTI_ONLY(if (jubm.failed()) return freeze_pinned_native;)
   freeze_result res = CAST_TO_FN_PTR(FreezeContFnT, freeze_preempt_entry())(current, current->last_Java_sp());
   log_trace(continuations, preempt)("try_preempt: %d", res);
+  log_develop_debug(continuations)("[os thread " UINTX_FORMAT_X_0 "] Continuation::try_preempt: %d", curr_thread_id, res);
   JVMTI_ONLY(jubm.set_result(res);)
 
   if (current->has_pending_exception()) {

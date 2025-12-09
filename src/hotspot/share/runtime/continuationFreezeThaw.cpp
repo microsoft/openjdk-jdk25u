@@ -1336,10 +1336,12 @@ NOINLINE freeze_result FreezeBase::recurse_freeze_stub_frame(frame& f, frame& ca
     intptr_t* from = stack_frame_top;
     int size = fsize;
 
+    intx curr_thread_id = os::current_thread_id();
+
     if (from != nullptr) {
       for (int i = 0; i < size; i++) {
-        log_develop_debug(continuations)("FreezeBase::recurse_freeze_stub_frame copy_to_chunk from[%d] = " INTPTR_FORMAT ", source address " INTPTR_FORMAT,
-                                         i, p2i((void*)from[i]), p2i(&from[i]));
+        log_develop_debug(continuations)("[os thread " UINTX_FORMAT_X_0 "] FreezeBase::recurse_freeze_stub_frame copy_to_chunk from[%d] = " INTPTR_FORMAT ", source address " INTPTR_FORMAT,
+                                         curr_thread_id, i, p2i((void*)from[i]), p2i(&from[i]));
       }
     }
   }
@@ -2563,10 +2565,10 @@ intptr_t* ThawBase::handle_preempted_continuation(intptr_t* sp, Continuation::pr
         if (thread_addr != nullptr) {
           //__int64** thread_addr_64 = (__int64**)thread_addr;
         for (int i = num_slots; i > 0; i--) {
-            log_develop_debug(continuations)("ThawBase::handle_preempted_continuation found [%d]" INTPTR_FORMAT " at address " INTPTR_FORMAT " with pc " INTPTR_FORMAT " sp " INTPTR_FORMAT, i, p2i(thread_addr[i]), p2i(&thread_addr[i]), p2i(top.pc()), p2i(top.sp()));
+            log_develop_debug(continuations)("ThawBase::handle_preempted_continuation found [%d] " INTPTR_FORMAT " at address " INTPTR_FORMAT " with pc " INTPTR_FORMAT " sp " INTPTR_FORMAT, i, p2i(thread_addr[i]), p2i(&thread_addr[i]), p2i(top.pc()), p2i(top.sp()));
           }
         for (int i = 0; i <= num_slots; i++) {
-            log_develop_debug(continuations)("ThawBase::handle_preempted_continuation found [%d]" INTPTR_FORMAT " at address " INTPTR_FORMAT " with pc " INTPTR_FORMAT " sp " INTPTR_FORMAT, -i, p2i(thread_addr[-i]), p2i(&thread_addr[-i]), p2i(top.pc()), p2i(top.sp()));
+            log_develop_debug(continuations)("ThawBase::handle_preempted_continuation found [%d] " INTPTR_FORMAT " at address " INTPTR_FORMAT " with pc " INTPTR_FORMAT " sp " INTPTR_FORMAT, -i, p2i(thread_addr[-i]), p2i(&thread_addr[-i]), p2i(top.pc()), p2i(top.sp()));
           }
         }
 
@@ -2808,8 +2810,8 @@ void ThawBase::recurse_thaw_stub_frame(const frame& hf, frame& caller, int num_f
 
     if (from != nullptr) {
       for (int i = 0; i < size; i++) {
-        log_develop_debug(continuations)("ThawBase::recurse_thaw_stub_frame copy_from_chunk from[%d] = " INTPTR_FORMAT ", source address " INTPTR_FORMAT,
-                                         i, p2i((void*)from[i]), p2i(&from[i]));
+        log_develop_debug(continuations)("[os thread " UINTX_FORMAT_X_0 "] ThawBase::recurse_thaw_stub_frame copy_from_chunk from[%d] = " INTPTR_FORMAT ", source address " INTPTR_FORMAT,
+                                         curr_thread_id, i, p2i((void*)from[i]), p2i(&from[i]));
 
         if (TestFlag9 && _preempted_case && thread_addr != nullptr) {
           if ((address)(from[i]) == (address)(*thread_addr)) {
@@ -2886,7 +2888,7 @@ void ThawBase::recurse_thaw_stub_frame(const frame& hf, frame& caller, int num_f
       }
     }
 
-    log_develop_debug(continuations)("recurse_thaw_stub_frame inspected %d locations and updated %d locations after %d iterations for old_thread " INTPTR_FORMAT " and new thread " INTPTR_FORMAT,
+    log_develop_debug(continuations)("[os thread " UINTX_FORMAT_X_0 "] ThawBase::recurse_thaw_stub_frame inspected %d locations and updated %d locations after %d iterations for old_thread " INTPTR_FORMAT " and new thread " INTPTR_FORMAT,
                                      locations, updated, iterations, p2i(old_thread), p2i(_thread));
   }
   if (TestFlagA) {
