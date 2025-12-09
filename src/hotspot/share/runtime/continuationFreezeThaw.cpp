@@ -1739,10 +1739,13 @@ static freeze_result preempt_epilog(ContinuationWrapper& cont, freeze_result res
     return res;
   }
 
+  intptr_t* caller_sp = old_last_frame.sp() + old_last_frame.cb()->frame_size();
+
   intx curr_thread_id = os::current_thread_id();
   log_develop_debug(continuations)("[os thread " UINTX_FORMAT_X_0 "] preempt_epilog calling patch_return_pc_with_preempt_stub to"
-    " patch the return from the runtime stub back to the compiled method so that the target returns to the preempt cleanup stub at " INTPTR_FORMAT,
-    curr_thread_id, p2i(StubRoutines::cont_preempt_stub()));
+    " patch the return from the runtime stub back to the compiled method so that the target returns to the preempt cleanup stub at " INTPTR_FORMAT
+    " with caller_sp: " INTPTR_FORMAT,
+    curr_thread_id, p2i(StubRoutines::cont_preempt_stub()), p2i(caller_sp));
 
   patch_return_pc_with_preempt_stub(old_last_frame);
   cont.tail()->set_preempted(true);
@@ -2185,6 +2188,8 @@ NOINLINE intptr_t* Thaw<ConfigT>::thaw_fast(stackChunkOop chunk) {
     ls.print_cr("thaw_fast");
     chunk->print_on(true, &ls);
   }
+  intx curr_thread_id = os::current_thread_id();
+  log_develop_debug(continuations)("Thaw<ConfigT>::thaw_fast started on [os thread " UINTX_FORMAT_X_0 "]", curr_thread_id);
 
   // Below this heuristic, we thaw the whole chunk, above it we thaw just one frame.
   static const int threshold = 500; // words
@@ -2274,6 +2279,7 @@ NOINLINE intptr_t* Thaw<ConfigT>::thaw_slow(stackChunkOop chunk, Continuation::t
   Continuation::preempt_kind preempt_kind;
   bool retry_fast_path = false;
 
+  intx curr_thread_id = os::current_thread_id();
   _preempted_case = chunk->preempted();
   if (_preempted_case) {
     ObjectWaiter* waiter = java_lang_VirtualThread::objectWaiter(_thread->vthread());
@@ -2286,6 +2292,8 @@ NOINLINE intptr_t* Thaw<ConfigT>::thaw_slow(stackChunkOop chunk, Continuation::t
       bool mon_acquired = mon->resume_operation(_thread, waiter, _cont);
       assert(!mon_acquired || mon->has_owner(_thread), "invariant");
       if (!mon_acquired) {
+        log_develop_debug(continuations)("Thaw<ConfigT>::thaw_slow [os thread " UINTX_FORMAT_X_0
+          "] Failed to acquire monitor. Return to enterSpecial to unmount again.", curr_thread_id);
         // Failed to acquire monitor. Return to enterSpecial to unmount again.
         return push_cleanup_continuation();
       }
@@ -2317,6 +2325,9 @@ NOINLINE intptr_t* Thaw<ConfigT>::thaw_slow(stackChunkOop chunk, Continuation::t
     if (_preempted_case) {
       return handle_preempted_continuation(sp, preempt_kind, true /* fast_case */);
     }
+
+    log_develop_debug(continuations)("Thaw<ConfigT>::thaw_slow [os thread " UINTX_FORMAT_X_0
+      "] returning sp: " INTPTR_FORMAT, curr_thread_id, p2i(sp));
     return sp;
   }
 
@@ -2365,6 +2376,9 @@ NOINLINE intptr_t* Thaw<ConfigT>::thaw_slow(stackChunkOop chunk, Continuation::t
 
   if (_preempted_case) {
     return handle_preempted_continuation(sp, preempt_kind, false /* fast_case */);
+  } else {
+    log_develop_debug(continuations)("Thaw<ConfigT>::thaw_slow [os thread " UINTX_FORMAT_X_0
+      "] was not for a preempted continuation", curr_thread_id);
   }
   return sp;
 }
@@ -2528,6 +2542,9 @@ intptr_t* ThawBase::handle_preempted_continuation(intptr_t* sp, Continuation::pr
     }
   }
 #endif
+  intx curr_thread_id = os::current_thread_id();
+  log_develop_debug(continuations)("ThawBase::handle_preempted_continuation [os thread " UINTX_FORMAT_X_0
+    "] preempt_kind = %d", curr_thread_id, preempt_kind);
 
   if (fast_case) {
     // If we thawed in the slow path the runtime stub/native wrapper frame already
