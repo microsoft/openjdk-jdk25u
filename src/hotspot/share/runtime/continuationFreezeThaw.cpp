@@ -1715,7 +1715,8 @@ static inline freeze_result freeze_epilog(ContinuationWrapper& cont) {
   verify_continuation(cont.continuation());
   assert(!cont.is_empty(), "");
 
-  log_develop_debug(continuations)("=== End of freeze cont ### #" INTPTR_FORMAT, cont.hash());
+  intx curr_thread_id = os::current_thread_id();
+  log_develop_debug(continuations)("[os thread " UINTX_FORMAT_X_0 "] === End of freeze cont ### #" INTPTR_FORMAT, curr_thread_id, cont.hash());
   return freeze_ok;
 }
 
@@ -1760,6 +1761,8 @@ static inline freeze_result freeze_internal(JavaThread* current, intptr_t* const
 
   CONT_JFR_ONLY(EventContinuationFreeze event;)
 
+  intx curr_thread_id = os::current_thread_id();
+
   ContinuationEntry* entry = current->last_continuation();
 
   oop oopCont = entry->cont_oop(current);
@@ -1768,7 +1771,7 @@ static inline freeze_result freeze_internal(JavaThread* current, intptr_t* const
 
   verify_continuation(oopCont);
   ContinuationWrapper cont(current, oopCont);
-  log_develop_debug(continuations)("FREEZE #" INTPTR_FORMAT " " INTPTR_FORMAT, cont.hash(), p2i((oopDesc*)oopCont));
+  log_develop_debug(continuations)("[os thread " UINTX_FORMAT_X_0 "] FREEZE #" INTPTR_FORMAT " " INTPTR_FORMAT, curr_thread_id,cont.hash(), p2i((oopDesc*)oopCont));
 
   assert(entry->is_virtual_thread() == (entry->scope(current) == java_lang_VirtualThread::vthread_scope()), "");
 
@@ -2889,7 +2892,7 @@ void ThawBase::recurse_thaw_stub_frame(const frame& hf, frame& caller, int num_f
     }
 
     log_develop_debug(continuations)("[os thread " UINTX_FORMAT_X_0 "] ThawBase::recurse_thaw_stub_frame inspected %d locations and updated %d locations after %d iterations for old_thread " INTPTR_FORMAT " and new thread " INTPTR_FORMAT,
-                                     locations, updated, iterations, p2i(old_thread), p2i(_thread));
+                                     curr_thread_id, locations, updated, iterations, p2i(old_thread), p2i(_thread));
   }
   if (TestFlagA) {
     _cont.tail()->fix_thawed_frame(caller, &map);
@@ -3072,7 +3075,8 @@ static inline intptr_t* thaw_internal(JavaThread* thread, const Continuation::th
   assert(entry->is_virtual_thread() == (entry->scope(thread) == java_lang_VirtualThread::vthread_scope()), "");
 
   ContinuationWrapper cont(thread, oopCont);
-  log_develop_debug(continuations)("THAW #" INTPTR_FORMAT " " INTPTR_FORMAT, cont.hash(), p2i((oopDesc*)oopCont));
+  intx curr_thread_id = os::current_thread_id();
+  log_develop_debug(continuations)("[os thread " UINTX_FORMAT_X_0 "] THAW #" INTPTR_FORMAT " " INTPTR_FORMAT, curr_thread_id, cont.hash(), p2i((oopDesc*)oopCont));
 
 #ifdef ASSERT
   set_anchor_to_entry(thread, cont.entry());
@@ -3089,7 +3093,7 @@ static inline intptr_t* thaw_internal(JavaThread* thread, const Continuation::th
   CONT_JFR_ONLY(thw.jfr_info().post_jfr_event(&event, cont.continuation(), thread);)
 
   verify_continuation(cont.continuation());
-  log_develop_debug(continuations)("=== End of thaw #" INTPTR_FORMAT, cont.hash());
+  log_develop_debug(continuations)("=== [os thread " UINTX_FORMAT_X_0 "] End of thaw #" INTPTR_FORMAT, curr_thread_id, cont.hash());
 
   return sp;
 }
