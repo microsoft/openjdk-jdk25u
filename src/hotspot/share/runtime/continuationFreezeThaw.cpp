@@ -1330,6 +1330,18 @@ NOINLINE freeze_result FreezeBase::recurse_freeze_stub_frame(frame& f, frame& ca
 
   copy_to_chunk(stack_frame_top, heap_frame_top, fsize);
 
+  if (TestFlag8) {
+    intptr_t* from = stack_frame_top;
+    int size = fsize;
+
+    if (from != nullptr) {
+      for (int i = 0; i < size; i++) {
+        log_develop_debug(continuations)("ThawBase::recurse_thaw_stub_frame copy_to_chunk from[" INTPTR_FORMAT "] = " INTPTR_FORMAT,
+                                         p2i(&from[i]), p2i((void*)from[i]));
+      }
+    }
+  }
+
   patch(f, hf, caller, false /*is_bottom_frame*/);
 
   DEBUG_ONLY(after_freeze_java_frame(hf, false /*is_bottom_frame*/);)
