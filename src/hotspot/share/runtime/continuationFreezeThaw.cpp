@@ -1336,8 +1336,8 @@ NOINLINE freeze_result FreezeBase::recurse_freeze_stub_frame(frame& f, frame& ca
 
     if (from != nullptr) {
       for (int i = 0; i < size; i++) {
-        log_develop_debug(continuations)("ThawBase::recurse_thaw_stub_frame copy_to_chunk from[" INTPTR_FORMAT "] = " INTPTR_FORMAT,
-                                         p2i(&from[i]), p2i((void*)from[i]));
+        log_develop_debug(continuations)("FreezeBase::recurse_freeze_stub_frame copy_to_chunk from[%d] = " INTPTR_FORMAT ", source address " INTPTR_FORMAT,
+                                         i, p2i((void*)from[i]), p2i(&from[i]));
       }
     }
   }
@@ -2794,8 +2794,8 @@ void ThawBase::recurse_thaw_stub_frame(const frame& hf, frame& caller, int num_f
 
     if (from != nullptr) {
       for (int i = 0; i < size; i++) {
-        log_develop_debug(continuations)("ThawBase::recurse_thaw_stub_frame copy_from_chunk from[" INTPTR_FORMAT "] = " INTPTR_FORMAT,
-                                         p2i(&from[i]), p2i((void*)from[i]));
+        log_develop_debug(continuations)("ThawBase::recurse_thaw_stub_frame copy_from_chunk from[%d] = " INTPTR_FORMAT ", source address " INTPTR_FORMAT,
+                                         i, p2i((void*)from[i]), p2i(&from[i]));
 
         if (TestFlag9 && _preempted_case && thread_addr != nullptr) {
           if ((address)(from[i]) == (address)(*thread_addr)) {
