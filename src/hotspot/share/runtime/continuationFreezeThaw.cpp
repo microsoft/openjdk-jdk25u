@@ -921,31 +921,32 @@ NOINLINE freeze_result FreezeBase::recurse_freeze(frame& f, frame& caller, int c
   if (stack_overflow()) {
     return freeze_exception;
   }
+  intx curr_thread_id = os::current_thread_id();
 
   if (f.is_compiled_frame()) {
     if (UNLIKELY(f.oop_map() == nullptr)) {
       // special native frame
-      log_develop_debug(continuations)("FreezeBase::recurse_freeze: (1) special native frame");
+      log_develop_debug(continuations)("[os thread " UINTX_FORMAT_X_0 "] FreezeBase::recurse_freeze: (1) special native frame", curr_thread_id);
       return freeze_pinned_native;
     }
-    log_develop_debug(continuations)("FreezeBase::recurse_freeze: (2) calling recurse_freeze_compiled_frame");
+    log_develop_debug(continuations)("[os thread " UINTX_FORMAT_X_0 "] FreezeBase::recurse_freeze: (2) calling recurse_freeze_compiled_frame", curr_thread_id);
     return recurse_freeze_compiled_frame(f, caller, callee_argsize, callee_interpreted);
   } else if (f.is_interpreted_frame()) {
     assert(!f.interpreter_frame_method()->is_native() || (top && _preempt), "");
-    log_develop_debug(continuations)("FreezeBase::recurse_freeze: (3) calling recurse_freeze_interpreted_frame");
+    log_develop_debug(continuations)("[os thread " UINTX_FORMAT_X_0 "] FreezeBase::recurse_freeze: (3) calling recurse_freeze_interpreted_frame", curr_thread_id);
     return recurse_freeze_interpreted_frame(f, caller, callee_argsize, callee_interpreted);
   } else if (top && _preempt) {
     assert(f.is_native_frame() || f.is_runtime_frame(), "");
     if (f.is_native_frame()) {
-      log_develop_debug(continuations)("FreezeBase::recurse_freeze: (4) calling recurse_freeze_native_frame");
+      log_develop_debug(continuations)("[os thread " UINTX_FORMAT_X_0 "] FreezeBase::recurse_freeze: (4) calling recurse_freeze_native_frame", curr_thread_id);
     } else {
-      log_develop_debug(continuations)("FreezeBase::recurse_freeze: (5) calling recurse_freeze_stub_frame");
+      log_develop_debug(continuations)("[os thread " UINTX_FORMAT_X_0 "] FreezeBase::recurse_freeze: (5) calling recurse_freeze_stub_frame", curr_thread_id);
     }
     return f.is_native_frame() ? recurse_freeze_native_frame(f, caller) : recurse_freeze_stub_frame(f, caller);
   } else {
     // Frame can't be frozen. Most likely the call_stub or upcall_stub
     // which indicates there are further natives frames up the stack.
-    log_develop_debug(continuations)("FreezeBase::recurse_freeze: (6) returning freeze_pinned_native");
+    log_develop_debug(continuations)("[os thread " UINTX_FORMAT_X_0 "] FreezeBase::recurse_freeze: (6) returning freeze_pinned_native", curr_thread_id);
     return freeze_pinned_native;
   }
 }
@@ -1734,6 +1735,11 @@ static freeze_result preempt_epilog(ContinuationWrapper& cont, freeze_result res
     log_develop_trace(continuations)("=== end of freeze (fail %d)", res);
     return res;
   }
+
+  intx curr_thread_id = os::current_thread_id();
+  log_develop_debug(continuations)("[os thread " UINTX_FORMAT_X_0 "] preempt_epilog calling patch_return_pc_with_preempt_stub to"
+    " patch the return from the runtime stub back to the compiled method so that the target returns to the preempt cleanup stub at " INTPTR_FORMAT,
+    curr_thread_id, p2i(StubRoutines::cont_preempt_stub()));
 
   patch_return_pc_with_preempt_stub(old_last_frame);
   cont.tail()->set_preempted(true);
@@ -2787,6 +2793,7 @@ void ThawBase::recurse_thaw_stub_frame(const frame& hf, frame& caller, int num_f
 
   patch(f, caller, false /*is_bottom_frame*/);
 
+  intx curr_thread_id = os::current_thread_id();
   // The continuation might now run on a different platform thread than the previous time so
   // we need to adjust the current thread saved in the stub frame after copying from the heap.
   // handle_preempted_continuation may have already done this for the fast_case, but the copy
@@ -2796,8 +2803,8 @@ void ThawBase::recurse_thaw_stub_frame(const frame& hf, frame& caller, int num_f
     int size = fsize + frame::metadata_words;
     JavaThread** thread_addr = frame::saved_thread_address(f);
 
-    log_develop_debug(continuations)("recurse_thaw_stub_frame: TestFlag8 found frame::saved_thread_address " INTPTR_FORMAT " with (new) _thread " INTPTR_FORMAT,
-                                      p2i(*thread_addr), p2i(_thread));
+    log_develop_debug(continuations)("[os thread " UINTX_FORMAT_X_0 "] ThawBase::recurse_thaw_stub_frame: TestFlag8 found frame::saved_thread_address " INTPTR_FORMAT " with (new) _thread " INTPTR_FORMAT,
+                                      curr_thread_id, p2i(*thread_addr), p2i(_thread));
 
     if (from != nullptr) {
       for (int i = 0; i < size; i++) {
@@ -2829,8 +2836,8 @@ void ThawBase::recurse_thaw_stub_frame(const frame& hf, frame& caller, int num_f
   if (oop_map_result != nullptr) {
     for (OopMapStream oms(oop_map_result); !oms.is_done(); oms.next()) { oop_map_entry_count++; }
   }
-  log_develop_debug(continuations)("recurse_thaw_stub_frame: f.pc() = " INTPTR_FORMAT ", f.oop_map() = " INTPTR_FORMAT ", oop_map_entry_count = %d",
-                                   p2i(f.pc()), p2i(oop_map_result), oop_map_entry_count);
+  log_develop_debug(continuations)("[os thread " UINTX_FORMAT_X_0 "] ThawBase::recurse_thaw_stub_frame: f.pc() = " INTPTR_FORMAT ", f.oop_map() = " INTPTR_FORMAT ", oop_map_entry_count = %d",
+                                   curr_thread_id, p2i(f.pc()), p2i(oop_map_result), oop_map_entry_count);
 
   if (TestFlagA) {
     f.oop_map()->update_register_map(&f, &map, true /* thawing */);
