@@ -48,6 +48,7 @@
 #include "runtime/objectMonitor.hpp"
 #include "runtime/objectMonitor.inline.hpp"
 #include "runtime/orderAccess.hpp"
+#include "runtime/os.hpp"
 #include "runtime/osThread.hpp"
 #include "runtime/safefetch.hpp"
 #include "runtime/safepointMechanism.inline.hpp"
@@ -549,8 +550,11 @@ void ObjectMonitor::enter_with_contention_mark(JavaThread* current, ObjectMonito
   if (is_virtual) {
     notify_contended_enter(current);
     result = Continuation::try_preempt(current, ce->cont_oop(current));
+    intx curr_thread_id = os::current_thread_id();
+    log_develop_debug(continuations)("[os thread " UINTX_FORMAT_X_0 "] ObjectMonitor::enter_with_contention_mark: this = " INTPTR_FORMAT " try_preempt = %d", curr_thread_id, p2i(this), result);
     if (result == freeze_ok) {
       bool acquired = vthread_monitor_enter(current);
+      log_develop_debug(continuations)("[os thread " UINTX_FORMAT_X_0 "] ObjectMonitor::enter_with_contention_mark: this = " INTPTR_FORMAT " acquired = %d", curr_thread_id, p2i(this), acquired);
       if (acquired) {
         // We actually acquired the monitor while trying to add the vthread to the
         // _entry_list so cancel preemption. We will still go through the preempt stub
