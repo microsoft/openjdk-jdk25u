@@ -57,6 +57,7 @@
 #include "runtime/keepStackGCProcessed.hpp"
 #include "runtime/objectMonitor.inline.hpp"
 #include "runtime/orderAccess.hpp"
+#include "runtime/os.hpp"
 #include "runtime/prefetch.inline.hpp"
 #include "runtime/smallRegisterMap.inline.hpp"
 #include "runtime/sharedRuntime.hpp"
@@ -2537,11 +2538,12 @@ intptr_t* ThawBase::handle_preempted_continuation(intptr_t* sp, Continuation::pr
     // we need to adjust the current thread saved in the stub frame before restoring registers.
       JavaThread** thread_addr = frame::saved_thread_address(top);
       JavaThread* old_thread = *thread_addr;
+      intx curr_thread_id = os::current_thread_id();
       if (thread_addr != nullptr) {
-        log_develop_debug(continuations)("ThawBase::handle_preempted_continuation changing current thread saved in the stub frame from " INTPTR_FORMAT " to " INTPTR_FORMAT " with pc " INTPTR_FORMAT " sp " INTPTR_FORMAT, p2i(*thread_addr), p2i(_thread), p2i(top.pc()), p2i(top.sp()));
+        log_develop_debug(continuations)("ThawBase::handle_preempted_continuation [os thread " UINTX_FORMAT_X_0 "] changing current thread saved in the stub frame from " INTPTR_FORMAT " to " INTPTR_FORMAT " with pc " INTPTR_FORMAT " sp " INTPTR_FORMAT, p2i(*thread_addr), p2i(_thread), p2i(top.pc()), p2i(top.sp()));
         *thread_addr = _thread;
       } else {
-        log_develop_debug(continuations)("ThawBase::handle_preempted_continuation thread_addr == nullptr for _thread " INTPTR_FORMAT " with pc " INTPTR_FORMAT " sp " INTPTR_FORMAT, p2i(_thread), p2i(top.pc()), p2i(top.sp()));
+        log_develop_debug(continuations)("ThawBase::handle_preempted_continuation [os thread " UINTX_FORMAT_X_0 "] thread_addr == nullptr for _thread " INTPTR_FORMAT " with pc " INTPTR_FORMAT " sp " INTPTR_FORMAT, p2i(_thread), p2i(top.pc()), p2i(top.sp()));
       }
 
     int num_slots = TestFlag5 ? 64 : 256;
