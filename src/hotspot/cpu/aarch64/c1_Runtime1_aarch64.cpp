@@ -65,8 +65,14 @@ int StubAssembler::call_RT(Register oop_result1, Register metadata_result, addre
   set_last_Java_frame(sp, rfp, retaddr, rscratch1);
 
   // do the call
+  dmb(Assembler::ISHLD);
+  dmb(Assembler::ISHLD);
+  dmb(Assembler::ISHLD);
   lea(rscratch1, RuntimeAddress(entry));
   blr(rscratch1);
+  dmb(Assembler::LD);
+  dmb(Assembler::LD);
+  dmb(Assembler::LD);
   bind(retaddr);
   int call_offset = offset();
   // verify callee-saved register
