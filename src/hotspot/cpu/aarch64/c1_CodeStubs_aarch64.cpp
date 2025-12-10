@@ -249,22 +249,19 @@ void MonitorEnterStub::emit_code(LIR_Assembler* ce) {
     __ dmb(Assembler::NSH);
   }
   ce->verify_oop_map(_info);
-  // After returning from the runtime stub, reload rthread (r28) to ensure it's current
-  // in case virtual thread migration occurred during the call. This is critical on
-  // Windows AArch64 where virtual threads can migrate between carrier threads.
   if (DMB07) {
     __ dmb(Assembler::LD);
     __ dmb(Assembler::LD);
     __ dmb(Assembler::LD);
     __ dmb(Assembler::LD);
   }
-  __ get_thread(rthread);
   if (DMB08) {
     __ dmb(Assembler::ISH);
     __ dmb(Assembler::ISH);
     __ dmb(Assembler::ISH);
     __ dmb(Assembler::ISH);
   }
+  // registers have not yet been restored at this point.
   __ b(_continuation);
   if (DMB09) {
     __ dmb(Assembler::ST);
