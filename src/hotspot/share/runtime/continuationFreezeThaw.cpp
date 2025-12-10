@@ -239,9 +239,18 @@ static JRT_LEAF(intptr_t*, thaw(JavaThread* thread, int kind))
   ResetNoHandleMark rnhm;
   DEBUG_ONLY(PauseNoSafepointVerifier pnsv(&__nsv);)
 
+  intx curr_thread_id = os::current_thread_id();
+  log_develop_debug(continuations)("[os thread " UINTX_FORMAT_X_0
+    "] entering JRT_LEAF thaw(thread " INTPTR_FORMAT ", kind %d)", curr_thread_id, p2i(thread), kind);
+
   // we might modify the code cache via BarrierSetNMethod::nmethod_entry_barrier
   MACOS_AARCH64_ONLY(ThreadWXEnable __wx(WXWrite, thread));
-  return ConfigT::thaw(thread, (Continuation::thaw_kind)kind);
+  intptr_t* result = ConfigT::thaw(thread, (Continuation::thaw_kind)kind);
+  log_develop_debug(continuations)("[os thread " UINTX_FORMAT_X_0
+    "] leaving JRT_LEAF thaw(thread " INTPTR_FORMAT ", kind %d) -> " INTPTR_FORMAT,
+    curr_thread_id, p2i(thread), kind, p2i(result));
+
+  return result;
 JRT_END
 
 JVM_ENTRY(jint, CONT_isPinned0(JNIEnv* env, jobject cont_scope)) {
