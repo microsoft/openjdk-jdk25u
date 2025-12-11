@@ -204,6 +204,10 @@ void MonitorEnterStub::emit_code(LIR_Assembler* ce) {
     __ dmb(Assembler::OSHLD);
     __ dmb(Assembler::OSHLD);
   }
+  if (DMB08) {
+    __ push(RegSet::range(r0, r29), sp);         // integer registers except lr & sp
+    __ add(sp, sp, -32 * wordSize);
+  }
   if (SaveMonitorEnterStubEntry) {
     __ adr(rscratch1, _entry);
     __ lea(rscratch2, ExternalAddress((address)&Runtime1::_monitorenter_stub_entrypoint));
@@ -256,10 +260,8 @@ void MonitorEnterStub::emit_code(LIR_Assembler* ce) {
     __ dmb(Assembler::LD);
   }
   if (DMB08) {
-    __ dmb(Assembler::ISH);
-    __ dmb(Assembler::ISH);
-    __ dmb(Assembler::ISH);
-    __ dmb(Assembler::ISH);
+    __ add(sp, sp, 32 * wordSize);
+    __ pop(RegSet::range(r0, r29), sp);
   }
   // registers have not yet been restored at this point.
   __ b(_continuation);
