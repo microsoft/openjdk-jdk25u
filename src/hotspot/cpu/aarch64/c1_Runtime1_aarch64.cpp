@@ -88,6 +88,9 @@ int StubAssembler::call_RT(Register oop_result1, Register metadata_result, addre
   pop(r0, sp);
 #endif
   reset_last_Java_frame(true);
+  dmb(Assembler::ISHLD);
+  dmb(Assembler::ISHLD);
+  dmb(Assembler::ISHLD);
 
   // check for pending exceptions
   { Label L;
@@ -119,6 +122,9 @@ int StubAssembler::call_RT(Register oop_result1, Register metadata_result, addre
   if (metadata_result->is_valid()) {
     get_vm_result_metadata(metadata_result, rthread);
   }
+  dmb(Assembler::ISH);
+  dmb(Assembler::ISH);
+  dmb(Assembler::ISH);
   return call_offset;
 }
 
@@ -926,7 +932,14 @@ OopMapSet* Runtime1::generate_code_for(C1StubId id, StubAssembler* sasm) {
 
         oop_maps = new OopMapSet();
         oop_maps->add_gc_map(call_offset, map);
+        
+        __ dmb(Assembler::OSH);
+        __ dmb(Assembler::OSH);
+        __ dmb(Assembler::OSH);
         restore_live_registers(sasm, save_fpu_registers);
+        __ dmb(Assembler::ST);
+        __ dmb(Assembler::ST);
+        __ dmb(Assembler::ST);
       }
       break;
 
