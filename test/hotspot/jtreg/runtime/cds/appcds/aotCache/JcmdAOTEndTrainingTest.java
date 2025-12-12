@@ -26,9 +26,14 @@
  * @test
  * @requires vm.cds.supports.aot.class.linking
  * @requires vm.cds.write.archived.java.heap
- * @summary Sanity test for Jcmd AOT.end_training command
+ * @summary Sanity test for Jcmd AOT.end_recording command
  * @library /test/lib
  * @build JcmdAOTEndTrainingTest
+ * @run driver jdk.test.lib.helpers.ClassFileInstaller -jar LingeredApp.jar
+ *              jdk/test/lib/apps/LingeredApp
+ *              jdk/test/lib/apps/LingeredApp$1
+ *              jdk/test/lib/apps/LingeredApp$SteadyStateLock
+ *              jdk/test/lib/process/OutputBuffer
  * @run driver JcmdAOTEndTrainingTest
  */
 
@@ -41,11 +46,24 @@ import java.io.IOException;
 
 public class JcmdAOTEndTrainingTest {
     public static void main(String[] args)  throws Exception {
+        test(false);
+        test(true);
+    }
+
+    static void test(boolean isTraining) throws Exception {
         LingeredApp theApp = null;
         try {
             theApp = new LingeredApp();
             theApp.setUseDefaultClasspath(false);
-            LingeredApp.startApp(theApp);
+            if (isTraining) {
+                LingeredApp.startApp(theApp,
+                                     "-cp", "LingeredApp.jar",
+                                     "-XX:AOTMode=record",
+                                     "-XX:AOTConfiguration=LingeredApp.aotconfig");
+            } else {
+                LingeredApp.startApp(theApp,
+                                     "-cp", "LingeredApp.jar");
+            }
             long pid = theApp.getPid();
 
             JDKToolLauncher jcmd = JDKToolLauncher.createUsingTestJDK("jcmd");
@@ -54,7 +72,13 @@ public class JcmdAOTEndTrainingTest {
 
             try {
                 OutputAnalyzer output = ProcessTools.executeProcess(jcmd.getCommand());
-                output.shouldContain("Error! Not a training run");
+                if (isTraining) {
+                    output.shouldContain("Training ended successfully");
+                } else {
+                    // this message is output when the VM is not recording AOT data
+                    output.shouldContain("Error! Not a training run");
+                }
+                output.shouldHaveExitValue(0);
             } catch (Exception e) {
                 throw new RuntimeException("Test failed: " + e);
             }
