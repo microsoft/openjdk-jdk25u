@@ -1533,8 +1533,13 @@ bool unnecessary_acquire(const Node *barrier)
 bool needs_acquiring_load(const Node *n)
 {
   assert(n->is_Load(), "expecting a load");
-  LoadNode *ld = n->as_Load();
-  return ld->is_acquire();
+//  LoadNode *ld = n->as_Load();
+//  return ld->is_acquire();
+  LoadNode *ld = n->as_Load();  // For ARM64 weak memory model, use acquire for:
+  // 1. Explicitly marked acquire loads
+  // 2. Pointer loads (LoadP/LoadN) which are often part of concurrent traversals
+  int op = ld->Opcode();
+  return ld->is_acquire() || (op == Op_LoadP || op == Op_LoadN);
 }
 
 bool unnecessary_release(const Node *n)
