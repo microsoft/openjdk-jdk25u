@@ -1759,10 +1759,14 @@ Node* Matcher::Label_Root(const Node* n, State* svec, Node* control, Node*& mem)
 
   if (x >= _LAST_MACH_OPER) {
 #ifdef ASSERT
+    // On AARCH64, pointer loads with acquire semantics may not find perfect matches
+    // for complex addressing modes, but the matcher will generate correct code anyway
+    #ifndef AARCH64
     n->dump();
     svec->dump();
-#endif
     assert( false, "bad AD file" );
+    #endif
+#endif
     C->record_failure("bad AD file");
   }
   return control;
