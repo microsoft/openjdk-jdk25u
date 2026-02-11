@@ -970,17 +970,30 @@ Node* LoadNode::make(PhaseGVN& gvn, Node* ctl, Node* mem, Node* adr, const TypeP
   case T_LONG:    load = new LoadLNode (ctl, mem, adr, adr_type, rt->is_long(), mo, control_dependency, require_atomic_access); break;
   case T_FLOAT:   load = new LoadFNode (ctl, mem, adr, adr_type, rt,            mo, control_dependency); break;
   case T_DOUBLE:  load = new LoadDNode (ctl, mem, adr, adr_type, rt,            mo, control_dependency, require_atomic_access); break;
+#ifdef AARCH64
+  // On ARM64, use acquire semantics for all pointer loads to ensure proper ordering
+  case T_ADDRESS: load = new LoadPNode (ctl, mem, adr, adr_type, rt->is_ptr(),  MemNode::acquire, control_dependency); break;
+#else
   case T_ADDRESS: load = new LoadPNode (ctl, mem, adr, adr_type, rt->is_ptr(),  mo, control_dependency); break;
+#endif
   case T_OBJECT:
   case T_NARROWOOP:
 #ifdef _LP64
     if (adr->bottom_type()->is_ptr_to_narrowoop()) {
+#ifdef AARCH64
+      load = new LoadNNode(ctl, mem, adr, adr_type, rt->make_narrowoop(), MemNode::acquire, control_dependency);
+#else
       load = new LoadNNode(ctl, mem, adr, adr_type, rt->make_narrowoop(), mo, control_dependency);
+#endif
     } else
 #endif
     {
       assert(!adr->bottom_type()->is_ptr_to_narrowoop() && !adr->bottom_type()->is_ptr_to_narrowklass(), "should have got back a narrow oop");
+#ifdef AARCH64
+      load = new LoadPNode(ctl, mem, adr, adr_type, rt->is_ptr(), MemNode::acquire, control_dependency);
+#else
       load = new LoadPNode(ctl, mem, adr, adr_type, rt->is_ptr(), mo, control_dependency);
+#endif
     }
     break;
   default:
