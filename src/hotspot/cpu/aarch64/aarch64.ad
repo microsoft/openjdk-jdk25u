@@ -6677,12 +6677,15 @@ instruct loadP(iRegPNoSp dst, memory8 mem)
 %}
 
 // Load Pointer with acquire semantics (load + barrier for complex addressing)
+// Cost must be <= VOLATILE_REF_COST so the matcher prefers this pattern
+// (which supports memory8 offset addressing) over loadP_volatile + addP_reg_imm
+// when the address has a foldable offset.
 instruct loadP_acq(iRegPNoSp dst, memory8 mem)
 %{
   match(Set dst (LoadP mem));
   predicate(needs_acquiring_load(n) && (n->as_Load()->barrier_data() == 0));
 
-  ins_cost(4 * INSN_COST + VOLATILE_REF_COST);
+  ins_cost(VOLATILE_REF_COST);
   format %{ "ldr  $dst, $mem\t# ptr (acquire)\n\t"
             "dmb ishld" %}
 
@@ -6710,12 +6713,15 @@ instruct loadN(iRegNNoSp dst, memory4 mem)
 %}
 
 // Load Compressed Pointer with acquire semantics (load + barrier for complex addressing)
+// Cost must be <= VOLATILE_REF_COST so the matcher prefers this pattern
+// (which supports memory4 offset addressing) over loadN_volatile + addP_reg_imm
+// when the address has a foldable offset.
 instruct loadN_acq(iRegNNoSp dst, memory4 mem)
 %{
   match(Set dst (LoadN mem));
   predicate(needs_acquiring_load(n) && n->as_Load()->barrier_data() == 0);
 
-  ins_cost(4 * INSN_COST + VOLATILE_REF_COST);
+  ins_cost(VOLATILE_REF_COST);
   format %{ "ldrw  $dst, $mem\t# compressed ptr (acquire)\n\t"
             "dmb ishld" %}
 
