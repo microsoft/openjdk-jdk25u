@@ -188,6 +188,16 @@ void BarrierSetC1::load_at_resolved(LIRAccess& access, LIR_Opr result) {
     __ load(access.resolved_addr()->as_address_ptr(), result, access.access_emit_info(), patch_code);
   }
 
+#ifdef AARCH64
+  // On AArch64's weakly-ordered memory model, a plain load of a reference can be
+  // reordered with subsequent dependent loads (e.g. dereferencing the loaded pointer
+  // to read a field). Add acquire barrier after all reference loads to match the C2
+  // fix in memnode.cpp that forces MemNode::acquire on all LoadP/LoadN on AArch64.
+  if (!is_volatile && !is_acquire && is_reference_type(access.type())) {
+    __ membar_acquire();
+  }
+#endif
+
   if (is_volatile || is_acquire) {
     __ membar_acquire();
   }
