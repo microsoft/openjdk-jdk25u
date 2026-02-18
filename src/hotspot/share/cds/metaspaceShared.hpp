@@ -61,6 +61,7 @@ class MetaspaceShared : AllStatic {
   static Array<Method*>* _archived_method_handle_intrinsics;
   static int volatile _preimage_static_archive_dumped;
   static jlong _preimage_static_archive_recording_duration;
+  static FileMapInfo* _output_mapinfo;
 
  public:
   enum {
@@ -185,6 +186,7 @@ public:
 private:
   static void read_extra_data(JavaThread* current, const char* filename) NOT_CDS_RETURN;
   static void fork_and_dump_final_static_archive(TRAPS);
+  static void open_output_mapinfo();
   static bool write_static_archive(ArchiveBuilder* builder, FileMapInfo* map_info, ArchiveHeapInfo* heap_info);
   static FileMapInfo* open_static_archive();
   static FileMapInfo* open_dynamic_archive();

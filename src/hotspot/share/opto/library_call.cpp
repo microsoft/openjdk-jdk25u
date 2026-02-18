@@ -1575,9 +1575,14 @@ bool LibraryCallKit::inline_string_toBytesU() {
     Node* src_start = array_element_address(value, offset, T_CHAR);
     Node* dst_start = basic_plus_adr(newcopy, arrayOopDesc::base_offset_in_bytes(T_BYTE));
 
-    // Check if src array address is aligned to HeapWordSize (dst is always aligned)
-    const TypeInt* toffset = gvn().type(offset)->is_int();
-    bool aligned = toffset->is_con() && ((toffset->get_con() * type2aelembytes(T_CHAR)) % HeapWordSize == 0);
+    // Check if dst array address is aligned to HeapWordSize
+    bool aligned = (arrayOopDesc::base_offset_in_bytes(T_BYTE) % HeapWordSize == 0);
+    // If true, then check if src array address is aligned to HeapWordSize
+    if (aligned) {
+      const TypeInt* toffset = gvn().type(offset)->is_int();
+      aligned = toffset->is_con() && ((arrayOopDesc::base_offset_in_bytes(T_CHAR) +
+                                       toffset->get_con() * type2aelembytes(T_CHAR)) % HeapWordSize == 0);
+    }
 
     // Figure out which arraycopy runtime method to call (disjoint, uninitialized).
     const char* copyfunc_name = "arraycopy";
@@ -1658,8 +1663,8 @@ bool LibraryCallKit::inline_string_getCharsU() {
     // Check if array addresses are aligned to HeapWordSize
     const TypeInt* tsrc = gvn().type(src_begin)->is_int();
     const TypeInt* tdst = gvn().type(dst_begin)->is_int();
-    bool aligned = tsrc->is_con() && ((tsrc->get_con() * type2aelembytes(T_BYTE)) % HeapWordSize == 0) &&
-                   tdst->is_con() && ((tdst->get_con() * type2aelembytes(T_CHAR)) % HeapWordSize == 0);
+    bool aligned = tsrc->is_con() && ((arrayOopDesc::base_offset_in_bytes(T_BYTE) + tsrc->get_con() * type2aelembytes(T_BYTE)) % HeapWordSize == 0) &&
+                   tdst->is_con() && ((arrayOopDesc::base_offset_in_bytes(T_CHAR) + tdst->get_con() * type2aelembytes(T_CHAR)) % HeapWordSize == 0);
 
     // Figure out which arraycopy runtime method to call (disjoint, uninitialized).
     const char* copyfunc_name = "arraycopy";
@@ -3240,7 +3245,7 @@ bool LibraryCallKit::inline_native_jvm_commit() {
   lease_compare_io->init_req(_true_path, i_o());
   lease_compare_io->init_req(_false_path, input_io_state);
 
-  lease_result_value->init_req(_true_path, null()); // if the lease was returned, return 0.
+  lease_result_value->init_req(_true_path, _gvn.longcon(0)); // if the lease was returned, return 0L.
   lease_result_value->init_req(_false_path, arg); // if not lease, return new updated position.
 
   RegionNode* result_rgn = new RegionNode(PATH_LIMIT);

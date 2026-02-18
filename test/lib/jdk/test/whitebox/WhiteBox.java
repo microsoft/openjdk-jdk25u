@@ -77,6 +77,9 @@ public class WhiteBox {
   public native long getVMLargePageSize();
   public native long getHeapSpaceAlignment();
   public native long getHeapAlignment();
+  public native long getMinimumJavaStackSize();
+
+  public native boolean  hasExternalSymbolsStripped();
 
   private native boolean isObjectInOldGen0(Object o);
   public         boolean isObjectInOldGen(Object o) {
@@ -325,6 +328,10 @@ public class WhiteBox {
   public native long NMTNewArena(long initSize);
   public native void NMTFreeArena(long arena);
   public native void NMTArenaMalloc(long arena, long size);
+
+  // Sanitizers
+  public native boolean isAsanEnabled();
+  public native boolean isUbsanEnabled();
 
   // Compiler
 
@@ -840,6 +847,13 @@ public class WhiteBox {
   public native boolean isJVMTIIncluded();
 
   public native void waitUnsafe(int time_ms);
+
+  public native void busyWait(int cpuTimeMs);
+
+  // returns true if supported, false if not
+  public native boolean cpuSamplerSetOutOfStackWalking(boolean enable);
+
+  public native long cpuSamplerOutOfStackWalkingIterations();
 
   public native void pinObject(Object o);
 
