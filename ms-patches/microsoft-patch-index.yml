@@ -16,7 +16,6 @@
 # Patches that we are applying to each release.
 active-patches:
 # - ms-patches/microsoft-patch-index // this patch branch is required for all releases
-  - ms-patches/aotergo
   - ms-patches/gettemppath2
   - ms-patches/8357445-g1-time-based-heap-uncommit
   - ms-patches/enable-high-performance-gpu-selection-for-windows-in-jvm
@@ -35,3 +34,4 @@ active-patches:
 # been abandoned for one reason or another.
 #
 # abandoned-patches:
+  - ZZ_archive/ms-patches/aotergo
