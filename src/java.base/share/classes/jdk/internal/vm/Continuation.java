@@ -345,6 +345,7 @@ public class Continuation {
      * @throws IllegalStateException if not currently in the given {@code scope},
      */
     @Hidden
+    @DontInline
     @JvmtiHideEvents
     public static boolean yield(ContinuationScope scope) {
         Continuation cont = JLA.getContinuation(currentCarrierThread());
