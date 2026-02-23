@@ -67,6 +67,21 @@ void BarrierSetAssembler::load_at(MacroAssembler* masm, DecoratorSet decorators,
       assert(in_native, "why else?");
       __ ldr(dst, src);
     }
+    // On AArch64's weakly-ordered memory model, a plain LDR of a reference can
+    // be reordered with subsequent dependent loads (e.g. dereferencing the loaded
+    // pointer to read a field). This causes failures in concurrent data structures
+    // such as ForkJoinPool's work queues where a reference load followed by a
+    // field access may see stale data.
+    //
+    // Add a LoadLoad|LoadStore barrier (dmb ishld) after every reference load to
+    // enforce acquire semantics, matching the C2 fix in memnode.cpp that forces
+    // MemNode::acquire on all LoadP/LoadN nodes on AArch64.
+    //
+    // This is only needed when the caller hasn't already requested acquire or
+    // stronger ordering through the decorators, to avoid redundant barriers.
+    if ((decorators & (MO_ACQUIRE | MO_SEQ_CST)) == 0) {
+      __ membar(Assembler::LoadLoad | Assembler::LoadStore);
+    }
     break;
   }
   case T_BOOLEAN: __ load_unsigned_byte (dst, src); break;
