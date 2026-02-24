@@ -108,6 +108,107 @@ DEFINE_INTRINSIC_CMPXCHG(InterlockedCompareExchange64, __int64)
 
 #undef DEFINE_INTRINSIC_CMPXCHG
 
+// Override PlatformLoad and PlatformStore to use LDAR/STLR on Windows AArch64.
+//
+// Under MSVC /volatile:iso (the default for ARM64), the generic PlatformLoad
+// and PlatformStore use plain volatile dereferences which generate plain LDR/STR
+// instructions with NO acquire/release barriers. This is insufficient for ARM64's
+// weak memory model in HotSpot's concurrent runtime code (ObjectMonitor Dekker
+// protocols, ParkEvent signaling, etc.) where Atomic::load()/Atomic::store() are
+// used in cross-thread communication patterns that depend on load/store ordering.
+//
+// On x86, this works by accident because x86-TSO provides store-release and
+// load-acquire semantics for all memory accesses. On ARM64, we must explicitly
+// use LDAR (acquire load) and STLR (release store) to get equivalent ordering.
+//
+// This matches the effective behavior of /volatile:ms but scoped only to
+// Atomic:: operations rather than ALL volatile accesses, and ensures correct
+// cross-core visibility for HotSpot's lock-free algorithms.
+
+template<>
+struct Atomic::PlatformLoad<1> {
+  template<typename T>
+  T operator()(T const volatile* dest) const {
+    STATIC_ASSERT(sizeof(T) == 1);
+    return PrimitiveConversions::cast<T>(
+      __ldar8(reinterpret_cast<unsigned __int8 volatile*>(
+        const_cast<T volatile*>(dest))));
+  }
+};
+
+template<>
+struct Atomic::PlatformLoad<2> {
+  template<typename T>
+  T operator()(T const volatile* dest) const {
+    STATIC_ASSERT(sizeof(T) == 2);
+    return PrimitiveConversions::cast<T>(
+      __ldar16(reinterpret_cast<unsigned __int16 volatile*>(
+        const_cast<T volatile*>(dest))));
+  }
+};
+
+template<>
+struct Atomic::PlatformLoad<4> {
+  template<typename T>
+  T operator()(T const volatile* dest) const {
+    STATIC_ASSERT(sizeof(T) == 4);
+    return PrimitiveConversions::cast<T>(
+      __ldar32(reinterpret_cast<unsigned __int32 volatile*>(
+        const_cast<T volatile*>(dest))));
+  }
+};
+
+template<>
+struct Atomic::PlatformLoad<8> {
+  template<typename T>
+  T operator()(T const volatile* dest) const {
+    STATIC_ASSERT(sizeof(T) == 8);
+    return PrimitiveConversions::cast<T>(
+      __ldar64(reinterpret_cast<unsigned __int64 volatile*>(
+        const_cast<T volatile*>(dest))));
+  }
+};
+
+template<>
+struct Atomic::PlatformStore<1> {
+  template<typename T>
+  void operator()(T volatile* dest, T new_value) const {
+    STATIC_ASSERT(sizeof(T) == 1);
+    __stlr8(reinterpret_cast<unsigned __int8 volatile*>(dest),
+            PrimitiveConversions::cast<unsigned __int8>(new_value));
+  }
+};
+
+template<>
+struct Atomic::PlatformStore<2> {
+  template<typename T>
+  void operator()(T volatile* dest, T new_value) const {
+    STATIC_ASSERT(sizeof(T) == 2);
+    __stlr16(reinterpret_cast<unsigned __int16 volatile*>(dest),
+             PrimitiveConversions::cast<unsigned __int16>(new_value));
+  }
+};
+
+template<>
+struct Atomic::PlatformStore<4> {
+  template<typename T>
+  void operator()(T volatile* dest, T new_value) const {
+    STATIC_ASSERT(sizeof(T) == 4);
+    __stlr32(reinterpret_cast<unsigned __int32 volatile*>(dest),
+             PrimitiveConversions::cast<unsigned __int32>(new_value));
+  }
+};
+
+template<>
+struct Atomic::PlatformStore<8> {
+  template<typename T>
+  void operator()(T volatile* dest, T new_value) const {
+    STATIC_ASSERT(sizeof(T) == 8);
+    __stlr64(reinterpret_cast<unsigned __int64 volatile*>(dest),
+             PrimitiveConversions::cast<unsigned __int64>(new_value));
+  }
+};
+
 // Specialize PlatformOrderedLoad and PlatformOrderedStore to use MSVC's
 // __ldar/__stlr intrinsics, matching the Linux AArch64 implementation which
 // uses __atomic_load/__atomic_store with __ATOMIC_ACQUIRE/__ATOMIC_RELEASE.
