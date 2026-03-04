@@ -4368,22 +4368,23 @@ public class ForkJoinPool extends AbstractExecutorService
      * either an idle worker being activated (branch 1) or a new spare being
      * created (branch 3).
      *
-     * <p>Branch 3 decrements RC in addition to incrementing TC so that
-     * {@code signalWork} (triggered by subsequent VT task submissions) sees
-     * the pool as under-active and can dispatch the queued VT continuations
-     * to the new spare.  Unlike the regular {@code tryCompensate}, this
-     * extra RC decrement requires {@code endCompensatedBlock} to restore
-     * <em>two</em> RC_UNITs: one for the decrement here and one for the
-     * spare's eventual deactivation (RC--).  The return value of {@code 2}
-     * (vs {@code UNCOMPENSATE = 1} for branch 1) signals
-     * {@code beginMonitorCompensatedBlock} to pass {@code 2 * RC_UNIT}
-     * to {@code endCompensatedBlock}, keeping the pool's active-worker
-     * accounting balanced across iterations:
+     * <p>Both branches decrement RC so that {@code signalWork} (triggered by
+     * subsequent VT task submissions) sees the pool as under-active and can
+     * dispatch the queued VT continuations.  Without the RC decrement in
+     * branch 1, monitor-blocked carriers are counted as "active" by
+     * {@code signalWork}'s {@code (short)(c >>> RC_SHIFT) >= pc} check,
+     * preventing it from waking idle workers when tasks are queued.
+     *
+     * <p>The RC decrement in both branches requires {@code endCompensatedBlock}
+     * to restore <em>two</em> RC_UNITs: one for the decrement here and one for
+     * the compensator's eventual deactivation (RC--).  Both branches return
+     * {@code 2} so that {@code beginMonitorCompensatedBlock} passes
+     * {@code 2 * RC_UNIT} to {@code endCompensatedBlock}:
      * <pre>
-     *   branch 3 CAS: RC--        (-1)
-     *   spare deactivates: RC--   (-1)
-     *   endCompensatedBlock:      (+2)
-     *   net:                       0
+     *   branch CAS: RC--                (-1)
+     *   compensator deactivates: RC--   (-1)
+     *   endCompensatedBlock:            (+2)
+     *   net:                             0
      * </pre>
      */
     private int tryCompensateForMonitor(long c) {
@@ -4391,20 +4392,27 @@ public class ForkJoinPool extends AbstractExecutorService
         long b = config;
         int pc        = parallelism,
             maxTotal  = (short)(b >>> TC_SHIFT) + pc,
-            active    = (short)(c >>> RC_SHIFT),
             total     = (short)(c >>> TC_SHIFT),
             sp        = (int)c,
             stat      = -1;
-        if (sp != 0 && active <= pc) {              // activate idle worker (branch 1)
+        if (sp != 0) {                              // activate idle worker (branch 1)
+            // RC-- so that signalWork sees the pool as under-active while
+            // the carrier is blocked on the monitor.  Without this, RC
+            // counts monitor-blocked carriers as "active", preventing
+            // signalWork from waking idle workers.  Return stat=2 so
+            // that beginMonitorCompensatedBlock passes 2*RC_UNIT to
+            // endCompensatedBlock, balancing both the RC-- here and the
+            // compensator's eventual deactivation (RC--).
             WorkQueue[] qs; WorkQueue v; int i;
             if ((qs = queues) != null && qs.length > (i = sp & SMASK) &&
                 (v = qs[i]) != null &&
-                compareAndSetCtl(c, (c & UMASK) | (v.stackPred & LMASK))) {
+                compareAndSetCtl(c, ((c - RC_UNIT) & UMASK) |
+                                    (v.stackPred & LMASK))) {
                 v.phase = sp;
                 U.fullFence(); // StoreLoad for Dekker with awaitWork parking/phase
                 if (v.parking != 0)
                     U.unpark(v.owner);
-                stat = 1;                           // need 1 * RC_UNIT at unblock
+                stat = 2;                           // need 2 * RC_UNIT at unblock
             }
         }
         // Branch 2 (passive RC-only decrement) is intentionally absent.
@@ -4440,7 +4448,7 @@ public class ForkJoinPool extends AbstractExecutorService
      * activates or creates a real replacement carrier (never passive RC-only).
      * <p>tryCompensateForMonitor returns:
      * <ul>
-     *   <li>{@code 1} — branch 1 (activated an idle worker), need 1 × RC_UNIT</li>
+     *   <li>{@code 2} — branch 1 (activated idle worker with RC--), need 2 × RC_UNIT</li>
      *   <li>{@code 2} — branch 3 (created spare with RC--), need 2 × RC_UNIT</li>
      *   <li>{@code 0} — saturated/stopping, no restoration needed</li>
      * </ul>
