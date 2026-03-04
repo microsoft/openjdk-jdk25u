@@ -1895,6 +1895,9 @@ public class ForkJoinPool extends AbstractExecutorService
                     createWorker();
                 else {
                     v.phase = sp;
+                    // Full fence (StoreLoad) for Dekker with awaitWork which
+                    // writes parking then reads phase.
+                    U.fullFence();
                     if (v.parking != 0)
                         U.unpark(v.owner);
                 }
@@ -1916,6 +1919,7 @@ public class ForkJoinPool extends AbstractExecutorService
                           c, ((UMASK & (c + RC_UNIT)) | (c & TC_MASK) |
                               (v.stackPred & LMASK))))) {
                 v.phase = sp;
+                U.fullFence(); // StoreLoad for Dekker with awaitWork parking/phase
                 if (v.parking != 0)
                     U.unpark(v.owner);
             }
@@ -2096,6 +2100,9 @@ public class ForkJoinPool extends AbstractExecutorService
             if ((p = w.phase) != activePhase && (runState & STOP) == 0L) {
                 LockSupport.setCurrentBlocker(this);
                 w.parking = 1;                 // enable unpark
+                // Full fence (StoreLoad) for Dekker with signalWork which
+                // writes phase then reads parking.
+                U.fullFence();
                 while ((p = w.phase) != activePhase) {
                     boolean trimmable = false; int trim;
                     Thread.interrupted();      // clear status
@@ -2202,6 +2209,7 @@ public class ForkJoinPool extends AbstractExecutorService
                 (v = qs[i]) != null &&
                 compareAndSetCtl(c, (c & UMASK) | (v.stackPred & LMASK))) {
                 v.phase = sp;
+                U.fullFence(); // StoreLoad for Dekker with awaitWork parking/phase
                 if (v.parking != 0)
                     U.unpark(v.owner);
                 stat = UNCOMPENSATE;
@@ -4351,13 +4359,106 @@ public class ForkJoinPool extends AbstractExecutorService
     }
 
     /**
+     * Variant of tryCompensate for use when a carrier thread is about to block
+     * on a native OS-level monitor (objectMonitor::enter_internal) while pinned
+     * by a virtual thread.
+     *
+     * <p>Unlike tryCompensate, this method omits the passive RC-only path
+     * (branch 2 of tryCompensate), so the blocking carrier always results in
+     * either an idle worker being activated (branch 1) or a new spare being
+     * created (branch 3).
+     *
+     * <p>Branch 3 decrements RC in addition to incrementing TC so that
+     * {@code signalWork} (triggered by subsequent VT task submissions) sees
+     * the pool as under-active and can dispatch the queued VT continuations
+     * to the new spare.  Unlike the regular {@code tryCompensate}, this
+     * extra RC decrement requires {@code endCompensatedBlock} to restore
+     * <em>two</em> RC_UNITs: one for the decrement here and one for the
+     * spare's eventual deactivation (RC--).  The return value of {@code 2}
+     * (vs {@code UNCOMPENSATE = 1} for branch 1) signals
+     * {@code beginMonitorCompensatedBlock} to pass {@code 2 * RC_UNIT}
+     * to {@code endCompensatedBlock}, keeping the pool's active-worker
+     * accounting balanced across iterations:
+     * <pre>
+     *   branch 3 CAS: RC--        (-1)
+     *   spare deactivates: RC--   (-1)
+     *   endCompensatedBlock:      (+2)
+     *   net:                       0
+     * </pre>
+     */
+    private int tryCompensateForMonitor(long c) {
+        Predicate<? super ForkJoinPool> sat;
+        long b = config;
+        int pc        = parallelism,
+            maxTotal  = (short)(b >>> TC_SHIFT) + pc,
+            active    = (short)(c >>> RC_SHIFT),
+            total     = (short)(c >>> TC_SHIFT),
+            sp        = (int)c,
+            stat      = -1;
+        if (sp != 0 && active <= pc) {              // activate idle worker (branch 1)
+            WorkQueue[] qs; WorkQueue v; int i;
+            if ((qs = queues) != null && qs.length > (i = sp & SMASK) &&
+                (v = qs[i]) != null &&
+                compareAndSetCtl(c, (c & UMASK) | (v.stackPred & LMASK))) {
+                v.phase = sp;
+                U.fullFence(); // StoreLoad for Dekker with awaitWork parking/phase
+                if (v.parking != 0)
+                    U.unpark(v.owner);
+                stat = 1;                           // need 1 * RC_UNIT at unblock
+            }
+        }
+        // Branch 2 (passive RC-only decrement) is intentionally absent.
+        else if (total < maxTotal && total < MAX_CAP) { // create spare (branch 3)
+            // TC++ and RC-- so that signalWork sees the pool as under-active.
+            // Return stat=2 so that beginMonitorCompensatedBlock passes
+            // 2*RC_UNIT to endCompensatedBlock, balancing both the RC--
+            // here and the spare's eventual deactivation (RC--).
+            long nc = ((c + TC_UNIT) & TC_MASK) |
+                      ((c - RC_UNIT) & RC_MASK) |
+                      (c & LMASK);
+            if ((runState & STOP) != 0L)
+                stat = 0;
+            else if (compareAndSetCtl(c, nc)) {
+                createWorker();
+                stat = 2;                           // need 2 * RC_UNIT at unblock
+            }
+        }
+        else if (!compareAndSetCtl(c, c))               // validate
+            ;
+        else if ((sat = saturate) != null && sat.test(this))
+            stat = 0;
+        else
+            throw new RejectedExecutionException(
+                "Thread limit exceeded replacing blocked worker");
+        return stat;
+    }
+
+    /**
+     * Like beginCompensatedBlock but for carrier threads that are about to
+     * block on a native OS-level monitor (objectMonitor::enter_internal) while
+     * pinned by a virtual thread.  Uses tryCompensateForMonitor which always
+     * activates or creates a real replacement carrier (never passive RC-only).
+     * <p>tryCompensateForMonitor returns:
+     * <ul>
+     *   <li>{@code 1} — branch 1 (activated an idle worker), need 1 × RC_UNIT</li>
+     *   <li>{@code 2} — branch 3 (created spare with RC--), need 2 × RC_UNIT</li>
+     *   <li>{@code 0} — saturated/stopping, no restoration needed</li>
+     * </ul>
+     * @return value to pass to endCompensatedBlock
+     */
+    final long beginMonitorCompensatedBlock() {
+        int c;
+        do {} while ((c = tryCompensateForMonitor(ctl)) < 0);
+        return (c == 0) ? 0L : (long)c * RC_UNIT;
+    }
+
+    /**
      * Re-adjusts parallelism after a blocking operation completes.
-     * @param post value from beginCompensatedBlock
+     * @param post value from beginCompensatedBlock or beginMonitorCompensatedBlock
      */
     void endCompensatedBlock(long post) {
-        if (post > 0L) {
+        if (post > 0L)
             getAndAddCtl(post);
-        }
     }
 
     /** ManagedBlock for external threads */
@@ -4414,8 +4515,13 @@ public class ForkJoinPool extends AbstractExecutorService
                 public long beginCompensatedBlock(ForkJoinPool pool) {
                     return pool.beginCompensatedBlock();
                 }
+                @Override
                 public void endCompensatedBlock(ForkJoinPool pool, long post) {
                     pool.endCompensatedBlock(post);
+                }
+                @Override
+                public long beginMonitorCompensatedBlock(ForkJoinPool pool) {
+                    return pool.beginMonitorCompensatedBlock();
                 }
             });
         defaultForkJoinWorkerThreadFactory =
