@@ -975,26 +975,12 @@ Node* LoadNode::make(PhaseGVN& gvn, Node* ctl, Node* mem, Node* adr, const TypeP
   case T_NARROWOOP:
 #ifdef _LP64
     if (adr->bottom_type()->is_ptr_to_narrowoop()) {
-#ifdef AARCH64
-      // On ARM64 with MSVC /volatile:iso, plain volatile loads have no acquire
-      // semantics. Use acquire for oop reference loads (T_OBJECT/T_NARROWOOP) to
-      // ensure proper ordering after GC reference loads that bypass GC barriers
-      // (barrier_data == 0). T_ADDRESS (raw pointer) loads are excluded — they are
-      // internal JVM loads (TLAB, TLS, metadata) that don't need Java memory model
-      // ordering and adding acquire causes C2 TLAB allocation corruption.
-      load = new LoadNNode(ctl, mem, adr, adr_type, rt->make_narrowoop(), barrier_data == 0 ? MemNode::acquire : mo, control_dependency);
-#else
       load = new LoadNNode(ctl, mem, adr, adr_type, rt->make_narrowoop(), mo, control_dependency);
-#endif
     } else
 #endif
     {
       assert(!adr->bottom_type()->is_ptr_to_narrowoop() && !adr->bottom_type()->is_ptr_to_narrowklass(), "should have got back a narrow oop");
-#ifdef AARCH64
-      load = new LoadPNode(ctl, mem, adr, adr_type, rt->is_ptr(), barrier_data == 0 ? MemNode::acquire : mo, control_dependency);
-#else
       load = new LoadPNode(ctl, mem, adr, adr_type, rt->is_ptr(), mo, control_dependency);
-#endif
     }
     break;
   default:
