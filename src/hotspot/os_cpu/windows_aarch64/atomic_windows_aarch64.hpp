@@ -110,20 +110,14 @@ DEFINE_INTRINSIC_CMPXCHG(InterlockedCompareExchange64, __int64)
 
 // Override PlatformLoad and PlatformStore to use LDAR/STLR on Windows AArch64.
 //
-// Under MSVC /volatile:iso (the default for ARM64), the generic PlatformLoad
-// and PlatformStore use plain volatile dereferences which generate plain LDR/STR
-// instructions with NO acquire/release barriers. This is insufficient for ARM64's
-// weak memory model in HotSpot's concurrent runtime code (ObjectMonitor Dekker
-// protocols, ParkEvent signaling, etc.) where Atomic::load()/Atomic::store() are
-// used in cross-thread communication patterns that depend on load/store ordering.
-//
-// On x86, this works by accident because x86-TSO provides store-release and
-// load-acquire semantics for all memory accesses. On ARM64, we must explicitly
-// use LDAR (acquire load) and STLR (release store) to get equivalent ordering.
-//
-// This matches the effective behavior of /volatile:ms but scoped only to
-// Atomic:: operations rather than ALL volatile accesses, and ensures correct
-// cross-core visibility for HotSpot's lock-free algorithms.
+// The generic PlatformLoad and PlatformStore use plain volatile dereferences.
+// With /volatile:ms (set in flags-cflags.m4 for AArch64), MSVC already compiles
+// those to LDAR/STLR, so these overrides produce identical codegen. They are
+// retained as defense-in-depth: they guarantee acquire/release semantics for
+// Atomic::load()/Atomic::store() regardless of the compiler flag setting,
+// ensuring correct cross-core visibility for HotSpot's lock-free algorithms
+// (ObjectMonitor Dekker protocols, ParkEvent signaling, etc.) even if
+// /volatile:ms were ever removed or overridden.
 
 template<>
 struct Atomic::PlatformLoad<1> {
