@@ -505,7 +505,7 @@ uint PhaseChaitin::Split(uint maxlrg, ResourceArea* split_arena) {
   bool                *UPblock;
   bool                 u1, u2, u3;
   Block               *b, *pred;
-  PhiNode             *phi;
+  PhiNode             *phi = nullptr;
   GrowableArray<uint>  lidxs(split_arena, maxlrg, 0, 0);
 
   // Array of counters to count splits per live range

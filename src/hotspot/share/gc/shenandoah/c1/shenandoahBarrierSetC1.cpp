@@ -237,7 +237,7 @@ void ShenandoahBarrierSetC1::load_at_resolved(LIRAccess& access, LIR_Opr result)
     bool is_anonymous = (decorators & ON_UNKNOWN_OOP_REF) != 0;
 
     // Register the value in the referent field with the pre-barrier
-    LabelObj *Lcont_anonymous;
+    LabelObj *Lcont_anonymous = nullptr;
     if (is_anonymous) {
       Lcont_anonymous = new LabelObj();
       generate_referent_check(access, Lcont_anonymous);

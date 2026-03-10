@@ -1686,7 +1686,7 @@ Node* LoadNode::split_through_phi(PhaseGVN* phase, bool ignore_missing_instance_
   }
 
   // Select Region to split through.
-  Node* region;
+  Node* region = nullptr;
   DomResult dom_result = DomResult::Dominate;
   if (!base_is_phi) {
     assert(mem->is_Phi(), "sanity");

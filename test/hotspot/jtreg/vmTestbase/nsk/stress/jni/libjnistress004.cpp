@@ -35,7 +35,7 @@ JNIEXPORT jcharArray JNICALL
 Java_nsk_stress_jni_JNIter004_CheckSum (JNIEnv *env, jobject jobj, jstring jstr) {
 
   unsigned char digest[DIGESTLENGTH];
-  jchar *tmp;
+  jchar *tmp = nullptr;
   static jint upper = 0;
   jcharArray jArr;
   int i;

@@ -940,7 +940,7 @@ JNIEXPORT jbyteArray JNICALL Java_sun_security_mscapi_CSignature_signCngHash
 
         BCRYPT_PKCS1_PADDING_INFO pkcs1Info;
         BCRYPT_PSS_PADDING_INFO pssInfo;
-        VOID* param;
+        VOID* param = NULL;
         DWORD dwFlags;
 
         switch (type) {
@@ -1175,7 +1175,7 @@ JNIEXPORT jboolean JNICALL Java_sun_security_mscapi_CSignature_verifyCngSignedHa
 
         BCRYPT_PKCS1_PADDING_INFO pkcs1Info;
         BCRYPT_PSS_PADDING_INFO pssInfo;
-        VOID* param;
+        VOID* param = NULL;
         DWORD dwFlags;
 
         switch (type) {

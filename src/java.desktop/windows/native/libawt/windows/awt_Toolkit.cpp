@@ -845,7 +845,7 @@ void AwtToolkit::CreateComponent(void* component, void* parent,
        Reference from it. This is indicated by isParentALocalReference */
 
     jobject gcomponent = env->NewGlobalRef((jobject)component);
-    jobject gparent;
+    jobject gparent = NULL;
     if (isParentALocalReference) gparent = env->NewGlobalRef((jobject)parent);
     ComponentCreatePacket ccp = { gcomponent,
                                   isParentALocalReference == TRUE ?  gparent : parent,

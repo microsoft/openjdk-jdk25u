@@ -331,7 +331,7 @@ bool EscapeBarrier::deoptimize_objects_internal(JavaThread* deoptee, intptr_t* f
 
   if (!objs_are_deoptimized(deoptee, fr_id)) {
     // Make sure the frame identified by fr_id is deoptimized and fetch its last vframe
-    compiledVFrame* last_cvf;
+    compiledVFrame* last_cvf = nullptr;
     bool fr_is_deoptimized;
     do {
       StackFrameStream fst(deoptee, true /* update */, false /* process_frames */);

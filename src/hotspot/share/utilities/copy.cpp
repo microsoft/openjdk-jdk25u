@@ -103,8 +103,8 @@ private:
    */
   template <typename T, CopyDirection D, bool swap, bool is_src_aligned, bool is_dst_aligned>
   static void do_conjoint_swap(const void* src, void* dst, size_t byte_count) {
-    const char* cur_src;
-    char* cur_dst;
+    const char* cur_src = nullptr;
+    char* cur_dst = nullptr;
 
     switch (D) {
     case RIGHT:

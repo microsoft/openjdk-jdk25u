@@ -123,7 +123,7 @@ JNIEXPORT jlong JNICALL
 Java_sun_security_jgss_wrapper_GSSLibStub_getMechPtr(JNIEnv *env,
                                                      jclass jcls,
                                                      jbyteArray jbytes) {
-  gss_OID cOid;
+  gss_OID cOid = NULL;
   unsigned int i, len;
   jbyte* bytes;
   int found;

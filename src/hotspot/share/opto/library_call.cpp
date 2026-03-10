@@ -7112,7 +7112,7 @@ Node * LibraryCallKit::field_address_from_object(Node * fromObj, const char * fi
 //------------------------------inline_aescrypt_Block-----------------------
 bool LibraryCallKit::inline_aescrypt_Block(vmIntrinsics::ID id) {
   address stubAddr = nullptr;
-  const char *stubName;
+  const char *stubName = nullptr;
   assert(UseAES, "need AES instruction support");
 
   switch(id) {

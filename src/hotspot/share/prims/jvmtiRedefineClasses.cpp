@@ -1088,8 +1088,8 @@ jvmtiError VM_RedefineClasses::compare_and_normalize_class_versions(
   int ni = 0;
   int oi = 0;
   while (true) {
-    Method* k_old_method;
-    Method* k_new_method;
+    Method* k_old_method = nullptr;
+    Method* k_new_method = nullptr;
     enum { matched, added, deleted, undetermined } method_was = undetermined;
 
     if (oi >= n_old_methods) {

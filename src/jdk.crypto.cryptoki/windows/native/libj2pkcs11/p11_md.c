@@ -91,7 +91,7 @@ JNIEXPORT jobject JNICALL Java_sun_security_pkcs11_wrapper_PKCS11_connect
     jobject globalPKCS11ImplementationReference;
     LPVOID lpMsgBuf = NULL;
     char *exceptionMessage = NULL;
-    const char *getFunctionListStr;
+    const char *getFunctionListStr = NULL;
 
     const char *libraryNameStr = (*env)->GetStringUTFChars(env,
             jPkcs11ModulePath, 0);

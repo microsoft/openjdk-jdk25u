@@ -561,7 +561,7 @@ inline int DS_addPos(DS_Info* info, int pos1, int pos2) {
 BOOL DS_addDeviceRef(INT32 deviceID) {
     HWND ownerWindow;
     HRESULT res = DS_OK;
-    LPDIRECTSOUND devPlay;
+    LPDIRECTSOUND devPlay = NULL;
     LPDIRECTSOUNDCAPTURE devCapture;
     LPGUID lpGuid = NULL;
 

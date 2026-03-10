@@ -963,7 +963,7 @@ JNIEXPORT jlong JNICALL Java_sun_awt_shell_Win32ShellFolder2_extractIcon
         return 0;
     }
 
-    HICON hIcon;
+    HICON hIcon = NULL;
 
     HRESULT hres;
     IExtractIconW* pIcon;
