@@ -21,6 +21,7 @@ active-patches:
   - ms-patches/enable-high-performance-gpu-selection-for-windows-in-jvm
   - ms-patches/remove_undocumentedAPI
   - ms-patches/win-aarch64-fixes
+  - ms-patches/AOTMxBean
 
 
 ## Upstreamed Patches
