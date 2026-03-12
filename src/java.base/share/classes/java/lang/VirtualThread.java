@@ -567,6 +567,13 @@ final class VirtualThread extends BaseVirtualThread {
                 setState(newState = TIMED_PARKED);
             }
 
+            // Full fence (StoreLoad) to ensure the PARKED/TIMED_PARKED state
+            // is visible before reading parkPermit (Dekker pattern with
+            // unpark which writes parkPermit then reads state).
+            // Note: storeFence is insufficient — on ARM64 it only emits
+            // LoadStore+StoreStore (dmb ishst), not StoreLoad (dmb ish).
+            U.fullFence();
+
             // may have been unparked while parking
             if (parkPermit && compareAndSetState(newState, UNPARKED)) {
                 // lazy submit if local queue is empty
@@ -591,6 +598,10 @@ final class VirtualThread extends BaseVirtualThread {
         // blocking on monitorenter
         if (s == BLOCKING) {
             setState(BLOCKED);
+
+            // Full fence (StoreLoad) for Dekker pattern with unblock
+            // which writes blockPermit then reads state.
+            U.fullFence();
 
             // may have been unblocked while blocking
             if (blockPermit && compareAndSetState(BLOCKED, UNBLOCKED)) {
@@ -621,6 +632,10 @@ final class VirtualThread extends BaseVirtualThread {
                     setState(newState = TIMED_WAIT);
                 }
             }
+
+            // Full fence (StoreLoad) for Dekker pattern with notify
+            // which writes notified then reads state.
+            U.fullFence();
 
             // may have been notified while in transition to wait state
             if (notified && compareAndSetState(newState, BLOCKED)) {
@@ -658,6 +673,14 @@ final class VirtualThread extends BaseVirtualThread {
     private void afterDone(boolean notifyContainer) {
         assert carrierThread == null;
         setState(TERMINATED);
+
+        // Full fence (StoreLoad) to ensure the TERMINATED state is
+        // visible to any thread that has stored a termination latch
+        // (joinNanos). Without this, on ARM64 the volatile write of
+        // state and the subsequent volatile read of termination can be
+        // reordered, causing a missed-wakeup where both sides miss
+        // each other's store (Dekker pattern).
+        U.fullFence();
 
         // notify anyone waiting for this virtual thread to terminate
         CountDownLatch termination = this.termination;
@@ -847,6 +870,10 @@ final class VirtualThread extends BaseVirtualThread {
      */
     private void unpark(boolean lazySubmit) {
         if (!getAndSetParkPermit(true) && currentThread() != this) {
+            // Full fence (StoreLoad) to ensure parkPermit=true is visible
+            // before reading state (Dekker pattern with afterYield PARKING
+            // path which writes state then reads parkPermit).
+            U.fullFence();
             int s = state();
 
             // unparked while parked
@@ -889,6 +916,7 @@ final class VirtualThread extends BaseVirtualThread {
     private void unblock() {
         assert !Thread.currentThread().isVirtual();
         blockPermit = true;
+        U.fullFence();  // Full fence (StoreLoad) for Dekker with afterYield BLOCKING path
         if (state() == BLOCKED && compareAndSetState(BLOCKED, UNBLOCKED)) {
             submitRunContinuation();
         }
@@ -1003,6 +1031,10 @@ final class VirtualThread extends BaseVirtualThread {
 
         // ensure termination object exists, then re-check state
         CountDownLatch termination = getTermination();
+        // Full fence (StoreLoad) for Dekker with afterDone: ensures that
+        // the CAS in getTermination() (storing the latch) is visible to
+        // afterDone before we read state here.
+        U.fullFence();
         if (state() == TERMINATED)
             return true;
 

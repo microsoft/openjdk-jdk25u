@@ -169,6 +169,7 @@ void BarrierSetC1::load_at_resolved(LIRAccess& access, LIR_Opr result) {
   LIRGenerator *gen = access.gen();
   DecoratorSet decorators = access.decorators();
   bool is_volatile = (decorators & MO_SEQ_CST) != 0;
+  bool is_acquire  = (decorators & MO_ACQUIRE) != 0;
   bool is_atomic = is_volatile || AlwaysAtomicAccesses;
   bool needs_patching = (decorators & C1_NEEDS_PATCHING) != 0;
   bool mask_boolean = (decorators & C1_MASK_BOOLEAN) != 0;
@@ -187,7 +188,7 @@ void BarrierSetC1::load_at_resolved(LIRAccess& access, LIR_Opr result) {
     __ load(access.resolved_addr()->as_address_ptr(), result, access.access_emit_info(), patch_code);
   }
 
-  if (is_volatile) {
+  if (is_volatile || is_acquire) {
     __ membar_acquire();
   }
 
