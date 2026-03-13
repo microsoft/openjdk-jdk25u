@@ -1895,6 +1895,9 @@ public class ForkJoinPool extends AbstractExecutorService
                     createWorker();
                 else {
                     v.phase = sp;
+                    // Full fence (StoreLoad) for Dekker with awaitWork which
+                    // writes parking then reads phase.
+                    U.fullFence();
                     if (v.parking != 0)
                         U.unpark(v.owner);
                 }
@@ -1916,6 +1919,7 @@ public class ForkJoinPool extends AbstractExecutorService
                           c, ((UMASK & (c + RC_UNIT)) | (c & TC_MASK) |
                               (v.stackPred & LMASK))))) {
                 v.phase = sp;
+                U.fullFence(); // StoreLoad for Dekker with awaitWork parking/phase
                 if (v.parking != 0)
                     U.unpark(v.owner);
             }
@@ -1993,11 +1997,11 @@ public class ForkJoinPool extends AbstractExecutorService
                                 a, k = slotOffset(m & b));
                             if (b != (b = q.base) || t == null ||
                                 !U.compareAndSetReference(a, k, t, null)) {
-                                if (a[b & m] == null) {
+                                if (U.getReferenceAcquire(a, slotOffset(m & b)) == null) {
                                     if (rescan)           // end of run
                                         break scan;
-                                    if (a[(b + 1) & m] == null &&
-                                        a[(b + 2) & m] == null) {
+                                    if (U.getReferenceAcquire(a, slotOffset(m & (b + 1))) == null &&
+                                        U.getReferenceAcquire(a, slotOffset(m & (b + 2))) == null) {
                                         break;            // probably empty
                                     }
                                     if (pb == (pb = b)) { // track progress
@@ -2008,13 +2012,15 @@ public class ForkJoinPool extends AbstractExecutorService
                             }
                             else {
                                 boolean propagate;
-                                int nb = q.base = b + 1, prevSrc = src;
+                                q.updateBase(b + 1);
+                                int nb = b + 1, prevSrc = src;
                                 w.nsteals = ++nsteals;
                                 w.source = src = j;       // volatile
                                 rescan = true;
                                 int nh = t.noUserHelp();
                                 if (propagate =
-                                    (prevSrc != src || nh != 0) && a[nb & m] != null)
+                                    (prevSrc != src || nh != 0) &&
+                                    U.getReferenceAcquire(a, slotOffset(m & nb)) != null)
                                     signalWork();
                                 w.topLevelExec(t, fifo);
                                 if ((b = q.base) != nb && !propagate)
@@ -2064,7 +2070,7 @@ public class ForkJoinPool extends AbstractExecutorService
             if ((q = qs[k & (n - 1)]) == null)
                 Thread.onSpinWait();
             else if ((a = q.array) != null && (cap = a.length) > 0 &&
-                     a[q.base & (cap - 1)] != null &&
+                     U.getReferenceAcquire(a, slotOffset(q.base & (cap - 1))) != null &&
                      --prechecks < 0 &&
                      (int)(c = ctl) == activePhase &&
                      compareAndSetCtl(c, (sp & LMASK) | ((c + RC_UNIT) & UMASK)))
@@ -2094,6 +2100,9 @@ public class ForkJoinPool extends AbstractExecutorService
             if ((p = w.phase) != activePhase && (runState & STOP) == 0L) {
                 LockSupport.setCurrentBlocker(this);
                 w.parking = 1;                 // enable unpark
+                // Full fence (StoreLoad) for Dekker with signalWork which
+                // writes phase then reads parking.
+                U.fullFence();
                 while ((p = w.phase) != activePhase) {
                     boolean trimmable = false; int trim;
                     Thread.interrupted();      // clear status
@@ -2200,6 +2209,7 @@ public class ForkJoinPool extends AbstractExecutorService
                 (v = qs[i]) != null &&
                 compareAndSetCtl(c, (c & UMASK) | (v.stackPred & LMASK))) {
                 v.phase = sp;
+                U.fullFence(); // StoreLoad for Dekker with awaitWork parking/phase
                 if (v.parking != 0)
                     U.unpark(v.owner);
                 stat = UNCOMPENSATE;
@@ -4399,6 +4409,7 @@ public class ForkJoinPool extends AbstractExecutorService
                 compareAndSetCtl(c, ((c - RC_UNIT) & UMASK) |
                                     (v.stackPred & LMASK))) {
                 v.phase = sp;
+                U.fullFence(); // StoreLoad for Dekker with awaitWork parking/phase
                 if (v.parking != 0)
                     U.unpark(v.owner);
                 stat = 2;                           // need 2 * RC_UNIT at unblock
