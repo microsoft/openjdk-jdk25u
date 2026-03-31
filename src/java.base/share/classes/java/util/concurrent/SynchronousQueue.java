@@ -182,7 +182,8 @@ public class SynchronousQueue<E> extends AbstractQueue<E>
                         // (ldaxr/stlxr) + plain load to a different field does
                         // NOT provide StoreLoad ordering.
                         // GHA Run 10
-                        VarHandle.fullFence();
+                        if (NEEDS_STORELOAD_FENCE)
+                            VarHandle.fullFence();
                         Thread w = p.waiter;
                         cmpExHead(p, p.next);
                         LockSupport.unpark(w);
