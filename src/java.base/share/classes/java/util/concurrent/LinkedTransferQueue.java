@@ -51,6 +51,9 @@ import java.util.concurrent.ForkJoinWorkerThread;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+import static jdk.internal.util.Architecture.*;
+import jdk.internal.util.OperatingSystem;
+
 /**
  * An unbounded {@link TransferQueue} based on linked nodes.
  * This queue orders elements FIFO (first-in-first-out) with respect
@@ -540,6 +543,14 @@ public class LinkedTransferQueue<E> extends AbstractQueue<E>
     }
 
     /**
+     * True on platforms where CAS (release) + plain/volatile load
+     * to a different address does NOT provide StoreLoad ordering,
+     * requiring an explicit fence for Dekker-style patterns.
+     */
+    static final boolean NEEDS_STORELOAD_FENCE =
+        isAARCH64() && OperatingSystem.isWindows();
+
+    /**
      * The maximum number of estimated removal failures (sweepVotes)
      * to tolerate before sweeping through the queue unlinking
      * dead nodes that were initially pinned.  Must be a power of
@@ -594,6 +605,7 @@ public class LinkedTransferQueue<E> extends AbstractQueue<E>
                         // writes waiter then reads item. On ARM64, CAS
                         // (ldaxr/stlxr) + plain load to a different field does
                         // NOT provide StoreLoad ordering.
+                    if (NEEDS_STORELOAD_FENCE)
                         VarHandle.fullFence();
                     Thread w = p.waiter;    // matched complementary node
                     if (p != h && h == cmpExHead(h, (q == null) ? p : q))
