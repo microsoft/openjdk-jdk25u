@@ -849,7 +849,7 @@ TEST_VM(os_windows, reserve_memory_special_concurrent) {
 // PAGE_GUARD raises STATUS_GUARD_PAGE_VIOLATION which is distinct from
 // EXCEPTION_ACCESS_VIOLATION. SafeFetch must handle both.
 TEST_VM(os_windows, safefetch_page_guard) {
-  const DWORD page_size = os::vm_page_size();
+  const DWORD page_size = (DWORD)os::vm_page_size();
 
   // Allocate a committed read-write page.
   void* mem = ::VirtualAlloc(nullptr, page_size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
