@@ -43,6 +43,9 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.RejectedExecutionException;
 import jdk.internal.misc.Unsafe;
 
+import static jdk.internal.util.Architecture.*;
+import jdk.internal.util.OperatingSystem;
+
 /**
  * Provides a framework for implementing blocking locks and related
  * synchronizers (semaphores, events, etc) that rely on
@@ -464,6 +467,14 @@ public abstract class AbstractQueuedSynchronizer
     static final int CANCELLED = 0x80000000; // must be negative
     static final int COND      = 2;          // in a condition wait
 
+    /**
+     * True on platforms where CAS (release) + plain/volatile load
+     * to a different address does NOT provide StoreLoad ordering,
+     * requiring an explicit fence for Dekker-style patterns.
+     */
+    private static final boolean NEEDS_STORELOAD_FENCE =
+        isAARCH64() && OperatingSystem.isWindows();
+
     /** CLH Nodes */
     abstract static class Node {
         volatile Node prev;       // initially attached via casTail
@@ -782,6 +793,14 @@ public abstract class AbstractQueuedSynchronizer
                 Thread.onSpinWait();
             } else if (node.status == 0) {
                 node.status = WAITING;          // enable signal and recheck
+                // Full fence (StoreLoad) to ensure WAITING status is visible
+                // before re-reading state in tryAcquire/tryAcquireShared
+                // (Dekker pattern with releaseShared/release which writes
+                // state then reads node.status in signalNext).
+                // On ARM64, volatile write (stlr) + volatile read (ldar) to
+                // different addresses does NOT provide StoreLoad ordering.
+                if (NEEDS_STORELOAD_FENCE)
+                    U.fullFence();
             } else {
                 spins = postSpins = (byte)((postSpins << 1) | 1);
                 try {
@@ -1097,6 +1116,14 @@ public abstract class AbstractQueuedSynchronizer
      */
     public final boolean release(int arg) {
         if (tryRelease(arg)) {
+            // Full fence (StoreLoad) to ensure the state update from
+            // tryRelease is visible before reading node.status in signalNext
+            // (Dekker pattern: release writes state then reads status,
+            // acquire writes status then reads state).
+            // On ARM64, CAS (stlxr/release) + ldar to different addresses
+            // does NOT provide StoreLoad ordering.
+            if (NEEDS_STORELOAD_FENCE)
+                U.fullFence();
             signalNext(head);
             return true;
         }
@@ -1184,6 +1211,9 @@ public abstract class AbstractQueuedSynchronizer
      */
     public final boolean releaseShared(int arg) {
         if (tryReleaseShared(arg)) {
+            // Full fence (StoreLoad) — see comment in release()
+            if (NEEDS_STORELOAD_FENCE)
+                U.fullFence();
             signalNext(head);
             return true;
         }
