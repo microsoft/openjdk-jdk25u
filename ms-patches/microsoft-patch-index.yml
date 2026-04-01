@@ -22,6 +22,7 @@ active-patches:
   - ms-patches/remove_undocumentedAPI
   - ms-patches/win-aarch64-fixes
   - ms-patches/AOTMxBean
+  - ms-patches/win-aarch64-queue-fences
 
 
 ## Upstreamed Patches
