@@ -22,8 +22,6 @@ active-patches:
   - ms-patches/remove_undocumentedAPI
   - ms-patches/win-aarch64-fixes
   - ms-patches/AOTMxBean
-  - ms-patches/win-aarch64-queue-fences
-
 
 ## Upstreamed Patches
 # Patches that we are no longer applying to our releases, as they
@@ -37,3 +35,4 @@ active-patches:
 #
 # abandoned-patches:
   - ZZ_archive/ms-patches/aotergo
+  - ZZ_archive/ms-patches/win-aarch64-queue-fences
