@@ -23,6 +23,7 @@ active-patches:
   - ms-patches/win-aarch64-fixes
   - ms-patches/AOTMxBean
   - ms-patches/win-aarch64-queue-fences
+  - ms-patches/detect-lse
 
 
 ## Upstreamed Patches
