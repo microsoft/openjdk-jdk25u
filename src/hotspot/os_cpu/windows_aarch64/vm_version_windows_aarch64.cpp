@@ -26,6 +26,21 @@
 #include "runtime/os.hpp"
 #include "runtime/vm_version.hpp"
 
+#include <winreg.h>
+
+// Try to read MIDR_EL1 via system register access.
+// Some Windows versions do not emulate this EL1 register read from user mode
+// and will throw EXCEPTION_ILLEGAL_INSTRUCTION, so we must guard with SEH.
+static __int64 try_read_midr_el1() {
+  __int64 midr = 0;
+  __try {
+    midr = _ReadStatusReg(0x4000 /* MIDR_EL1: o0=1,op1=0,CRn=0,CRm=0,op2=0 */);
+  } __except(EXCEPTION_EXECUTE_HANDLER) {
+    midr = 0;
+  }
+  return midr;
+}
+
 int VM_Version::get_current_sve_vector_length() {
   assert(_features & CPU_SVE, "should not call this");
   ShouldNotReachHere();
@@ -44,6 +59,10 @@ void VM_Version::get_os_cpu_info() {
   if (IsProcessorFeaturePresent(PF_ARM_V8_CRYPTO_INSTRUCTIONS_AVAILABLE))  _features |= CPU_AES | CPU_SHA1 | CPU_SHA2;
   if (IsProcessorFeaturePresent(PF_ARM_VFP_32_REGISTERS_AVAILABLE))        _features |= CPU_ASIMD;
   // No check for CPU_PMULL, CPU_SVE, CPU_SVE2
+
+  if (IsProcessorFeaturePresent(PF_ARM_V81_ATOMIC_INSTRUCTIONS_AVAILABLE)) {
+    _features |= CPU_LSE;
+  }
 
   __int64 dczid_el0 = _ReadStatusReg(0x5807 /* ARM64_DCZID_EL0 */);
 
@@ -78,22 +97,42 @@ void VM_Version::get_os_cpu_info() {
     os::free(buffer);
   }
 
+  // Identify CPU implementer, variant, part number, and revision.
+  // First try reading MIDR_EL1 directly (works on some Windows builds).
   {
-    char* buf = ::getenv("PROCESSOR_IDENTIFIER");
-    if (buf && strstr(buf, "Ampere(TM)") != nullptr) {
-      _cpu = CPU_AMCC;
-    } else if (buf && strstr(buf, "Cavium Inc.") != nullptr) {
-      _cpu = CPU_CAVIUM;
+    __int64 midr = try_read_midr_el1();
+    if (midr != 0) {
+      _cpu      = (midr >> 24) & 0xff;
+      _variant  = (midr >> 20) & 0xf;
+      _model    = (midr >>  4) & 0xfff;
+      _revision = (midr      ) & 0xf;
     } else {
-      log_info(os)("VM_Version: unknown CPU model");
-    }
-
-    if (_cpu) {
-      SYSTEM_INFO si;
-      GetSystemInfo(&si);
-      _model = si.wProcessorLevel;
-      _variant = si.wProcessorRevision / 0xFF;
-      _revision = si.wProcessorRevision & 0xFF;
+      // Fallback: read "CP 4000" from the registry.
+      // Windows stores raw system register values under
+      // HKLM\HARDWARE\DESCRIPTION\System\CentralProcessor\0\CP <encoding>.
+      // "CP 4000" is the raw MIDR_EL1 value (encoding 0x4000).
+      // It is stored as REG_QWORD (64-bit) even though MIDR_EL1 only uses the low 32 bits.
+      HKEY key;
+      LONG rc = RegOpenKeyExA(HKEY_LOCAL_MACHINE,
+                        "HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0",
+                        0, KEY_READ, &key);
+      if (rc == ERROR_SUCCESS) {
+        uint64_t cp4000 = 0;
+        DWORD size = sizeof(cp4000);
+        DWORD type = 0;
+        LONG qrc = RegQueryValueExA(key, "CP 4000", nullptr, &type,
+                             (LPBYTE)&cp4000, &size);
+        if (qrc == ERROR_SUCCESS && (type == REG_QWORD || type == REG_DWORD) && cp4000 != 0) {
+          _cpu      = (cp4000 >> 24) & 0xff;
+          _variant  = (cp4000 >> 20) & 0xf;
+          _model    = (cp4000 >>  4) & 0xfff;
+          _revision = (cp4000      ) & 0xf;
+        }
+        RegCloseKey(key);
+      }
+      if (_cpu == 0) {
+        log_info(os)("VM_Version: unable to identify CPU model");
+      }
     }
   }
 }
