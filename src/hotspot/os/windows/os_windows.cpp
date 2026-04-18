@@ -110,6 +110,21 @@
 #include <winsock2.h>
 #include <versionhelpers.h>
 
+// Export symbols to request high-performance GPU usage on Windows.
+// These variables are picked up by NVIDIA and AMD drivers to trigger
+// usage of the discrete GPU (if available).
+extern "C" {
+  __declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
+  __declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
+}
+
+// Log GPU export during startup for trace-level diagnostics
+static struct GPUExportLogger {
+  GPUExportLogger() {
+    log_trace(os)("JVM GPU Selection: Exporting NvOptimusEnablement and AmdPowerXpressRequestHighPerformance hints for driver.");
+  }
+} gpu_export_logger;
+
 // For DLL loading/load error detection
 // Values of PE COFF
 #define IMAGE_FILE_PTR_TO_SIGNATURE 0x3c
