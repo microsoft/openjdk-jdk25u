@@ -1,0 +1,16 @@
+title: G1: Time-Based Heap Uncommit During Idle Periods
+- work_item: '25471311'
+- jbs_bug: 'JDK-8357445'
+- author: mo-beck
+- owner: mo-beck
+- details:
+  - Implements time-based heap uncommitting for G1 GC
+    - Added new G1 flags - G1UseTimeBasedHeapSizing, G1TimeBasedEvaluationIntervalMillis, G1UncommitDelayMillis, G1MinRegionsToUncommit
+    - Added 'sizing' log tag for heap sizing operations
+  - Comprehensive Test Coverage:
+    - Enhanced TestG1RegionUncommit: minimum heap boundaries, concurrent allocation/uncommit scenarios
+    - Enhanced TestTimeBasedHeapSizing: humongous object handling, rapid allocation cycles, edge cases
+    - Enhanced TestTimeBasedRegionTracking: concurrent region access, lifecycle transition validation
+    - Enhanced TestTimeBasedHeapConfig: parameter boundary values, small heap configurations
+  - Backported from tip development to JDK 25u
+- release_note: New feature to Implement time-based heap uncommit for G1 during idle periods
