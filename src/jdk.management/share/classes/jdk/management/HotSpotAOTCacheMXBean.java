@@ -91,4 +91,26 @@ public interface HotSpotAOTCacheMXBean extends PlatformManagedObject {
      * successfully; {@code false} otherwise.
      */
     public boolean endRecording();
+
+     /**
+      * Returns the string representing the current AOT mode of
+      * operation.
+      *
+      * @return the string representing the current AOT mode.
+      */
+      public String getMode();
+
+      /**
+       * Tests if a recording is in progress.
+       *
+       * @return {@code true} if a recording is in progress; {@code false} otherwise.
+       */
+      public boolean isRecording();
+
+      /**
+       * If a recording is in progress or has been completed, then returns the duration in milliseconds
+       *
+       * @return duration of the recording in milliseconds.
+       */
+      public long getRecordingDuration();
 }
