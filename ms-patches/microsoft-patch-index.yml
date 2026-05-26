@@ -21,7 +21,7 @@ active-patches:
   - ms-patches/enable-high-performance-gpu-selection-for-windows-in-jvm
   - ms-patches/remove_undocumentedAPI
   - ms-patches/win-aarch64-fixes
-  - ms-patches/AOTMxBean
+  - ms-patches/AOTMxBean-AdditionalAPI
   - ms-patches/detect-lse
 
 
@@ -37,4 +37,5 @@ active-patches:
 #
 # abandoned-patches:
   - ZZ_archive/ms-patches/aotergo
+  - ZZ_archive/ms-patches/AOTMxBean
   - ZZ_archive/ms-patches/win-aarch64-queue-fences
