@@ -1,0 +1,8 @@
+title: Fix NTLM tests
+- work_item: 3013445
+- jbs_bug:
+- author: raneashay
+- owner: raneashay
+- contributors: raneashay
+- details:
+- release_note: Selectively enable NTLM tests on only the supported platforms
