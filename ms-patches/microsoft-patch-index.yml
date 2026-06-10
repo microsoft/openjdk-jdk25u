@@ -23,6 +23,15 @@ active-patches:
   - ms-patches/win-aarch64-fixes
   - ms-patches/AOTMxBean-AdditionalAPI
   - ms-patches/detect-lse
+  - ms-patches/aarch64_get_thread_helper
+  - ms-patches/connect-timeout
+  - ms-patches/g1-interval-constraint
+  - ms-patches/jmx-remote-bootstrap
+  - ms-patches/msys2-fixes-1
+  - ms-patches/msys2-fixes-2
+  - ms-patches/multiple-logins
+  - ms-patches/processor-api
+  - ms-patches/get-space-x
 
 
 ## Upstreamed Patches
