@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2025, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2026, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,6 +27,7 @@
 #include "gc/shared/bufferNode.hpp"
 #include "gc/shared/ptrQueue.hpp"
 #include "runtime/globals_extension.hpp"
+#include "runtime/task.hpp"
 #include "utilities/globalDefinitions.hpp"
 
 JVMFlag::Error G1RemSetArrayOfCardsEntriesConstraintFunc(uint value, bool verbose) {
@@ -117,6 +118,19 @@ JVMFlag::Error G1MaxNewSizePercentConstraintFunc(uint value, bool verbose) {
   } else {
     return JVMFlag::SUCCESS;
   }
+}
+
+JVMFlag::Error G1TimeBasedEvaluationIntervalMillisConstraintFunc(uintx value, bool verbose) {
+  if (!UseG1GC) return JVMFlag::SUCCESS;
+
+  if ((value % PeriodicTask::interval_gran) != 0) {
+    JVMFlag::printError(verbose,
+                        "G1TimeBasedEvaluationIntervalMillis (%zu) must be "
+                        "evenly divisible by PeriodicTask::interval_gran (%d)\n",
+                        value, PeriodicTask::interval_gran);
+    return JVMFlag::VIOLATES_CONSTRAINT;
+  }
+  return JVMFlag::SUCCESS;
 }
 
 JVMFlag::Error MaxGCPauseMillisConstraintFuncG1(uintx value, bool verbose) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2024, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2026, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -350,7 +350,8 @@
   product(uintx, G1TimeBasedEvaluationIntervalMillis, 60000, MANAGEABLE,    \
           "Interval in milliseconds between periodic heap-size evaluations "\
           "when G1UseTimeBasedHeapSizing is enabled")                       \
-          range(1000, LP64_ONLY(max_jlong) NOT_LP64(max_uintx / 2))         \
+          range(1000, max_jint / 10 * 10)                                   \
+          constraint(G1TimeBasedEvaluationIntervalMillisConstraintFunc,AtParse) \
                                                                             \
   product(uintx, G1UncommitDelayMillis, 300000, MANAGEABLE,                 \
           "A region is considered inactive if it has not been accessed "    \
