@@ -42,7 +42,7 @@ active-patches:
 
 
 # Patches that we are no longer applying to our releases as they have
-# been abandoned for one reason or another.
+# been abandoned for one reason or another
 #
 # abandoned-patches:
   - ZZ_archive/ms-patches/aotergo
