@@ -31,6 +31,7 @@ active-patches:
   - ms-patches/multiple-logins
   - ms-patches/processor-api
   - ms-patches/get-space-x
+  - ms-patches/win-aarch64-TestTrampoline
 
 
 ## Upstreamed Patches
