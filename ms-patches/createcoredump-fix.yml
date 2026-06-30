@@ -1,0 +1,9 @@
+title: Fix exception handling on Windows/ARM64
+- work_item: 3025798
+- jbs_bug:
+- author: swesonga
+- owner: swesonga
+- contributors: swesonga
+- details:
+- release_note:
+  - Fix exception handling and the execution of CreateCoreDumpOnCrash test
