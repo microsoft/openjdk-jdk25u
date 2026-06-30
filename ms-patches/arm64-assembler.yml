@@ -1,0 +1,9 @@
+title: Use the right (ARM64) assembler on Windows/ARM64
+- work_item: 3025786
+- jbs_bug:
+- author: swesonga
+- owner: swesonga
+- contributors: swesonga
+- details:
+- release_note:
+  - On Windows/ARM64, use armasm64.exe instead of ml64.exe
