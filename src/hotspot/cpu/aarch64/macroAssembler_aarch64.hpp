@@ -1747,6 +1747,9 @@ private:
   // Check the current thread doesn't need a cross modify fence.
   void verify_cross_modify_fence_not_required() PRODUCT_RETURN;
 
+  // ensure that stack pages are all initially accessed in the order required by the platform
+  // before allocating space on the stack for the largest expression stack used by a method.
+  void pd_extend_stack_guard_page_for_method_max_stack(Register const_method, Register temp1, Register temp2, Register temp3);
 };
 
 #ifdef ASSERT
