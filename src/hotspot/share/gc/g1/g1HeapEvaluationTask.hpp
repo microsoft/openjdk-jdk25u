@@ -25,22 +25,22 @@
 #ifndef SHARE_GC_G1_G1HEAPEVALUATIONTASK_HPP
 #define SHARE_GC_G1_G1HEAPEVALUATIONTASK_HPP
 
-#include "runtime/task.hpp"
 #include "gc/g1/g1_globals.hpp"
+#include "gc/g1/g1ServiceThread.hpp"
 
 class G1CollectedHeap;
 class G1HeapSizingPolicy;
 
-// Time-based heap evaluation task that runs during idle periods.
-// PeriodicTask's 10ms granularity is adequate for heap evaluation
-// which typically runs on intervals of seconds or longer.
-class G1HeapEvaluationTask : public PeriodicTask {
+// Periodic task that evaluates whether idle heap regions should be uncommitted.
+// Runs on the G1 service thread at G1TimeBasedEvaluationIntervalMillis intervals.
+class G1HeapEvaluationTask : public G1ServiceTask {
   G1CollectedHeap* _g1h;
   G1HeapSizingPolicy* _heap_sizing_policy;
+  int _idle_evaluation_count;  // Consecutive evaluations with no uncommit action.
 
 public:
   G1HeapEvaluationTask(G1CollectedHeap* g1h, G1HeapSizingPolicy* heap_sizing_policy);
-  virtual void task() override;
+  virtual void execute() override;
 };
 
 #endif // SHARE_GC_G1_G1HEAPEVALUATIONTASK_HPP
