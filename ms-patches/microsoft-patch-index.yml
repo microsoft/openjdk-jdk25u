@@ -32,6 +32,7 @@ active-patches:
   - ms-patches/processor-api
   - ms-patches/get-space-x
   - ms-patches/win-aarch64-TestTrampoline
+  - ms-patches/dt_socket-fix
 
 
 ## Upstreamed Patches
