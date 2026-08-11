@@ -59,9 +59,8 @@ class G1HeapSizingPolicy: public CHeapObj<mtGC> {
 
   G1HeapSizingPolicy(const G1CollectedHeap* g1h, const G1Analytics* analytics);
 
-  // Methods for time-based sizing
-  void get_uncommit_candidates(GrowableArray<G1HeapRegion*>* candidates);
-  bool should_uncommit_region(G1HeapRegion* hr) const;
+  // Count free regions eligible for time-based uncommit.
+  uint count_uncommit_candidates();
 
 public:
 
@@ -75,8 +74,14 @@ public:
   // Clear ratio tracking data used by expansion_amount().
   void clear_ratio_check_data();
 
-  // Time-based sizing methods
-  size_t evaluate_heap_resize(bool& expand);
+  // Returns true if the given free region has been idle long enough to uncommit.
+  bool should_uncommit_region(G1HeapRegion* hr) const;
+
+  // Lightweight pre-check (no locks).
+  bool should_attempt_uncommit() const;
+
+  // Full evaluation under Heap_lock. Returns the number of bytes to shrink.
+  size_t evaluate_heap_resize_for_uncommit();
 
   static G1HeapSizingPolicy* create(const G1CollectedHeap* g1h, const G1Analytics* analytics);
 };

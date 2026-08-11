@@ -1109,26 +1109,67 @@ bool G1CollectedHeap::expand_single_region(uint node_index) {
   return true;
 }
 
-void G1CollectedHeap::shrink_helper(size_t shrink_bytes) {
+void G1CollectedHeap::shrink_with_time_based_selection(size_t shrink_bytes) {
   size_t aligned_shrink_bytes = os::align_down_vm_page_size(shrink_bytes);
   aligned_shrink_bytes = align_down(aligned_shrink_bytes, G1HeapRegion::GrainBytes);
-  uint num_regions_to_remove = (uint)(shrink_bytes / G1HeapRegion::GrainBytes);
+  aligned_shrink_bytes = capacity() - MAX2(capacity() - aligned_shrink_bytes, MinHeapSize);
+  // MinHeapSize need not be region-aligned, so re-align after clamping to it.
+  aligned_shrink_bytes = align_down(aligned_shrink_bytes, G1HeapRegion::GrainBytes);
+  assert(is_aligned(aligned_shrink_bytes, G1HeapRegion::GrainBytes),
+         "Bytes to shrink %zuB not aligned", aligned_shrink_bytes);
 
+  if (aligned_shrink_bytes == 0) {
+    return;
+  }
+
+  _verifier->verify_region_sets_optional();
+  assert_at_safepoint_on_vm_thread();
+
+  _hrm.remove_all_free_regions();
+  shrink_helper_with_time_based_selection(aligned_shrink_bytes);
+  rebuild_region_sets(true /* free_list_only */);
+
+  _hrm.verify_optional();
+  _verifier->verify_region_sets_optional();
+}
+
+void G1CollectedHeap::shrink_helper_with_time_based_selection(size_t shrink_bytes) {
+  assert(shrink_bytes > 0, "must be");
+  assert(is_aligned(shrink_bytes, G1HeapRegion::GrainBytes),
+         "Shrink request for %zuB not aligned to heap region size %zuB",
+         shrink_bytes, G1HeapRegion::GrainBytes);
+
+  uint num_regions_to_remove = (uint)(shrink_bytes / G1HeapRegion::GrainBytes);
+  uint num_regions_removed = _hrm.shrink_by_time_based(num_regions_to_remove, _heap_sizing_policy);
+
+  if (num_regions_removed > 0) {
+    size_t shrunk_bytes = num_regions_removed * G1HeapRegion::GrainBytes;
+    log_info(gc, ergo, heap)("Time-based shrink: deactivated %u regions (%zuMB), heap now %zuMB",
+                             num_regions_removed, shrunk_bytes / M, capacity() / M);
+    policy()->record_new_heap_size(num_committed_regions());
+  }
+}
+
+void G1CollectedHeap::shrink_helper(size_t shrink_bytes) {
+  assert(shrink_bytes > 0, "must be");
+  // The normal GC resize path may pass an unaligned amount; truncating division handles it.
+  uint num_regions_to_remove = (uint)(shrink_bytes / G1HeapRegion::GrainBytes);
   uint num_regions_removed = _hrm.shrink_by(num_regions_to_remove);
   size_t shrunk_bytes = num_regions_removed * G1HeapRegion::GrainBytes;
 
-  log_debug(gc, ergo, heap)("Shrink the heap. requested shrinking amount: %zuB aligned shrinking amount: %zuB actual amount shrunk: %zuB",
-                            shrink_bytes, aligned_shrink_bytes, shrunk_bytes);
   if (num_regions_removed > 0) {
-    log_info(gc, heap)("Heap shrink details: uncommitted %u regions (%zuMB), heap size now %zuMB",
-                       num_regions_removed, shrunk_bytes / M, capacity() / M);
-    log_debug(gc, heap)("Heap shrink details: requested=%zuB attempted=%zuB actual=%zuB "
-                        "regions_removed=%u heap_capacity=%zuB",
-                        shrink_bytes, num_regions_to_remove * G1HeapRegion::GrainBytes,
-                        shrunk_bytes, num_regions_removed, capacity());
+    if (log_is_enabled(Debug, gc, heap)) {
+      log_debug(gc, heap)("Heap shrink: uncommitted %u regions (%zuMB), heap size now %zuMB. "
+                         "Details: requested=%zuB actual=%zuB heap_capacity=%zuB",
+                         num_regions_removed, shrunk_bytes / M, capacity() / M,
+                         shrink_bytes, shrunk_bytes, capacity());
+    } else {
+      log_info(gc, heap)("Heap shrink: uncommitted %u regions (%zuMB), heap size now %zuMB",
+                        num_regions_removed, shrunk_bytes / M, capacity() / M);
+    }
     policy()->record_new_heap_size(num_committed_regions());
   } else {
-    log_debug(gc, ergo, heap)("Did not shrink the heap (heap shrinking operation failed)");
+    log_debug(gc, ergo, heap)("Heap resize. Did not shrink the heap (heap shrinking operation failed)");
   }
 }
 
@@ -1151,22 +1192,14 @@ void G1CollectedHeap::shrink(size_t shrink_bytes) {
   _verifier->verify_region_sets_optional();
 }
 
-bool G1CollectedHeap::request_heap_shrink(size_t shrink_bytes) {
-  if (shrink_bytes == 0) {
-    return false;
-  }
+void G1CollectedHeap::request_heap_shrink() {
+  // Capture GC count before scheduling to detect if a GC occurs in the interim.
+  uint gc_count_before = total_collections();
 
-  // Fast path: if we are already at a safepoint (e.g. called from the
-  // GC service thread) just do the work directly.
-  if (SafepointSynchronize::is_at_safepoint()) {
-    shrink(shrink_bytes);
-    return true;                     // We did something.
-  }
-
-  // Schedule a small VM-op so the work is done at the next safepoint
-  VM_G1ShrinkHeap op(this, shrink_bytes);
+  // Schedule VM operation. It evaluates candidates in doit_prologue() under
+  // Heap_lock and performs the actual shrink at the safepoint in doit().
+  VM_G1ShrinkHeap op(this, gc_count_before);
   VMThread::execute(&op);
-  return true;                       // Pages were at least requested to be released.
 }
 
 class OldRegionSetChecker : public G1HeapRegionSetChecker {
@@ -1525,13 +1558,9 @@ jint G1CollectedHeap::initialize() {
   _free_arena_memory_task = new G1MonotonicArenaFreeMemoryTask("Card Set Free Memory Task");
   _service_thread->register_task(_free_arena_memory_task);
 
-  // Create the heap evaluation task using PeriodicTask
   if (G1UseTimeBasedHeapSizing) {
     _heap_evaluation_task = new G1HeapEvaluationTask(this, _heap_sizing_policy);
-    // PeriodicTask will be enrolled after G1 is fully initialized in post_initialize()
-    log_debug(gc, init)("G1 Time-Based Heap Evaluation task created (PeriodicTask)");
-  } else {
-    assert(_heap_evaluation_task == nullptr, "pre-condition");
+    _service_thread->register_task(_heap_evaluation_task);
   }
 
   // Here we allocate the dummy G1HeapRegion that is required by the
@@ -1593,12 +1622,6 @@ void G1CollectedHeap::safepoint_synchronize_end() {
 void G1CollectedHeap::post_initialize() {
   CollectedHeap::post_initialize();
   ref_processing_init();
-
-  // Enroll the heap evaluation task after G1 is fully initialized
-  if (G1UseTimeBasedHeapSizing) {
-    _heap_evaluation_task->enroll();  // PeriodicTask enroll() starts the task
-    log_debug(gc, init)("G1 Time-Based Heap Evaluation task enrolled (PeriodicTask)");
-  }
 }
 
 void G1CollectedHeap::ref_processing_init() {

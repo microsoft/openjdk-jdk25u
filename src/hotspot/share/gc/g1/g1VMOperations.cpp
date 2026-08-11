@@ -24,6 +24,7 @@
 
 #include "gc/g1/g1CollectedHeap.inline.hpp"
 #include "gc/g1/g1ConcurrentMarkThread.inline.hpp"
+#include "gc/g1/g1HeapSizingPolicy.hpp"
 #include "gc/g1/g1Policy.hpp"
 #include "gc/g1/g1Trace.hpp"
 #include "gc/g1/g1VMOperations.hpp"
@@ -174,6 +175,38 @@ void VM_G1PauseCleanup::work() {
   g1h->concurrent_mark()->cleanup();
 }
 
+bool VM_G1ShrinkHeap::skip_operation() const {
+  // A GC occurred since we scheduled this operation; skip shrinking since
+  // GC already determined the appropriate heap size.
+  if (_g1h->total_collections() != _gc_count_before) {
+    log_debug(gc, ergo, heap)("VM_G1ShrinkHeap: skipping - GC occurred since scheduling");
+    return true;
+  }
+  return VM_GC_Operation::skip_operation();
+}
+
+bool VM_G1ShrinkHeap::doit_prologue() {
+  // VM_GC_Operation::doit_prologue() acquires Heap_lock and checks
+  // skip_operation() / shutdown. If it returns false the operation is aborted.
+  if (!VM_GC_Operation::doit_prologue()) {
+    return false;
+  }
+
+  // Heap_lock is now held. Evaluate which regions should be uncommitted.
+  _shrink_bytes = _g1h->heap_sizing_policy()->evaluate_heap_resize_for_uncommit();
+
+  if (_shrink_bytes == 0) {
+    // Nothing to do - release Heap_lock and abort.
+    Heap_lock->unlock();
+    _prologue_succeeded = false;
+    return false;
+  }
+
+  log_debug(gc, ergo, heap)("VM_G1ShrinkHeap: shrinking heap by %zuMB (%zuB)",
+                            _shrink_bytes / M, _shrink_bytes);
+  return true;
+}
+
 void VM_G1ShrinkHeap::doit() {
-  _g1h->shrink(_bytes);
+  _g1h->shrink_with_time_based_selection(_shrink_bytes);
 }
