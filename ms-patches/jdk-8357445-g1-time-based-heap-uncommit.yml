@@ -1,0 +1,16 @@
+title: G1: Time-Based Heap Uncommit During Idle Periods
+- work_item: '25471311'
+- jbs_bug: 'JDK-8357445'
+- author: mo-beck
+- owner: mo-beck
+- details:
+  - Implements time-based heap uncommit for G1 GC: during idle periods G1 returns committed-but-unused heap to the OS.
+    - Diagnostic flag G1UseTimeBasedHeapSizing (default true) gates the feature; G1TimeBasedEvaluationIntervalMillis, G1UncommitDelayMillis, and G1MinRegionsToUncommit tune the evaluation cadence, the idle delay before uncommitting, and the minimum number of regions to uncommit.
+    - The uncommit runs at a safepoint via VM_G1ShrinkHeap on the VM thread; the periodic evaluation only performs a lightweight pre-check. The G1 master free region list is therefore mutated only under the safepoint MT-safety protocol (fixes the off-safepoint free-list crash, microsoft/openjdk#677).
+    - The shrink is bounded by the MaxHeapFreeRatio floor and honors the MinHeapSize / -Xms floor, so it stays consistent with GC-driven heap sizing.
+    - Idle heap-sizing activity is logged under the (gc, ergo, heap) tags.
+  - Test coverage:
+    - TestTimeBasedHeapConfig: validates the flag ranges/constraints (accepts valid values, rejects out-of-range and invalid combinations).
+    - TestG1RegionUncommit: fastdebug concurrency regression for the free-list safepoint race under concurrent allocation and uncommit.
+  - Backported from tip development to JDK 25u and adapted to the JDK 25u G1 APIs.
+- release_note: G1 can return unused committed heap to the OS during idle periods (time-based heap uncommit), controlled by the diagnostic G1UseTimeBasedHeapSizing flag (default enabled).

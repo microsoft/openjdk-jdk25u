@@ -25,7 +25,15 @@
 #ifndef SHARE_GC_G1_G1HEAPSIZINGPOLICY_HPP
 #define SHARE_GC_G1_G1HEAPSIZINGPOLICY_HPP
 
+#include "gc/g1/g1Analytics.hpp"
+#include "gc/g1/g1_globals.hpp"
+#include "gc/g1/g1HeapRegion.hpp"
 #include "memory/allocation.hpp"
+#include "runtime/globals.hpp"
+#include "utilities/debug.hpp"
+#include "utilities/globalDefinitions.hpp"
+#include "utilities/numberSeq.hpp"
+#include "utilities/ticks.hpp"
 
 class G1Analytics;
 class G1CollectedHeap;
@@ -50,6 +58,10 @@ class G1HeapSizingPolicy: public CHeapObj<mtGC> {
   double scale_with_heap(double pause_time_threshold);
 
   G1HeapSizingPolicy(const G1CollectedHeap* g1h, const G1Analytics* analytics);
+
+  // Count free regions eligible for time-based uncommit.
+  uint count_uncommit_candidates();
+
 public:
 
   // If an expansion would be appropriate, because recent GC overhead had
@@ -61,6 +73,15 @@ public:
   size_t full_collection_resize_amount(bool& expand, size_t allocation_word_size);
   // Clear ratio tracking data used by expansion_amount().
   void clear_ratio_check_data();
+
+  // Returns true if the given free region has been idle long enough to uncommit.
+  bool should_uncommit_region(G1HeapRegion* hr) const;
+
+  // Lightweight pre-check (no locks).
+  bool should_attempt_uncommit() const;
+
+  // Full evaluation under Heap_lock. Returns the number of bytes to shrink.
+  size_t evaluate_heap_resize_for_uncommit();
 
   static G1HeapSizingPolicy* create(const G1CollectedHeap* g1h, const G1Analytics* analytics);
 };

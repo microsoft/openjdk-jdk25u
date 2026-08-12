@@ -35,6 +35,7 @@
 #include "gc/g1/g1EdenRegions.hpp"
 #include "gc/g1/g1EvacStats.hpp"
 #include "gc/g1/g1GCPauseType.hpp"
+#include "gc/g1/g1HeapEvaluationTask.hpp"
 #include "gc/g1/g1HeapRegionAttr.hpp"
 #include "gc/g1/g1HeapRegionManager.hpp"
 #include "gc/g1/g1HeapRegionSet.hpp"
@@ -149,6 +150,7 @@ class G1CollectedHeap : public CollectedHeap {
   friend class VM_G1CollectForAllocation;
   friend class VM_G1CollectFull;
   friend class VM_G1TryInitiateConcMark;
+  friend class VM_G1ShrinkHeap;
   friend class VMStructs;
   friend class MutatorAllocRegion;
   friend class G1FullCollector;
@@ -202,6 +204,8 @@ private:
 
   // The block offset table for the G1 heap.
   G1BlockOffsetTable* _bot;
+
+  G1HeapEvaluationTask* _heap_evaluation_task;
 
 public:
   void rebuild_free_region_list();
@@ -591,6 +595,9 @@ public:
   bool expand(size_t expand_bytes, WorkerThreads* pretouch_workers = nullptr, double* expand_time_ms = nullptr);
   bool expand_single_region(uint node_index);
 
+  // Request a time-based heap shrink via VM_G1ShrinkHeap.
+  void request_heap_shrink();
+
   // Returns the PLAB statistics for a given destination.
   inline G1EvacStats* alloc_buffer_stats(G1HeapRegionAttr dest);
 
@@ -739,6 +746,10 @@ private:
   // (Rounds down to a G1HeapRegion boundary.)
   void shrink(size_t shrink_bytes);
   void shrink_helper(size_t expand_bytes);
+
+  // Shrink by uncommitting the oldest idle regions.
+  void shrink_with_time_based_selection(size_t shrink_bytes);
+  void shrink_helper_with_time_based_selection(size_t shrink_bytes);
 
   // Schedule the VM operation that will do an evacuation pause to
   // satisfy an allocation request of word_size. *succeeded will
@@ -930,6 +941,9 @@ public:
 
   // The current policy object for the collector.
   G1Policy* policy() const { return _policy; }
+  G1HeapSizingPolicy* heap_sizing_policy() const { return _heap_sizing_policy; }
+  G1HeapRegionManager& heap_region_manager() { return _hrm; }
+  const G1HeapRegionManager& heap_region_manager() const { return _hrm; }
   // The remembered set.
   G1RemSet* rem_set() const { return _rem_set; }
 
