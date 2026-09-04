@@ -35,11 +35,11 @@ active-patches:
 # have been upstreamed and are part of the official OpenJDK sources.
 #
 # upstreamed-patches: 
-  - ZZ_archive/ms-patches/connect-timeout
-  - ZZ_archive/ms-patches/jmx-remote-bootstrap
-  - ZZ_archive/ms-patches/multiple-logins
-  - ZZ_archive/ms-patches/processor-api
-  - ZZ_archive/ms-patches/dt_socket-fix
+#  - ZZ_archive/ms-patches/connect-timeout
+#  - ZZ_archive/ms-patches/jmx-remote-bootstrap
+#  - ZZ_archive/ms-patches/multiple-logins
+#  - ZZ_archive/ms-patches/processor-api
+#  - ZZ_archive/ms-patches/dt_socket-fix
 
 
 # Patches that we are no longer applying to our releases as they have
