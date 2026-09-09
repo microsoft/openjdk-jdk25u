@@ -24,15 +24,10 @@ active-patches:
   - ms-patches/AOTMxBean-AdditionalAPI
   - ms-patches/detect-lse
   - ms-patches/aarch64_get_thread_helper
-  - ms-patches/connect-timeout
-  - ms-patches/jmx-remote-bootstrap
   - ms-patches/msys2-fixes-1
   - ms-patches/msys2-fixes-2
-  - ms-patches/multiple-logins
-  - ms-patches/processor-api
   - ms-patches/get-space-x
   - ms-patches/win-aarch64-TestTrampoline
-  - ms-patches/dt_socket-fix
 
 
 ## Upstreamed Patches
@@ -40,6 +35,11 @@ active-patches:
 # have been upstreamed and are part of the official OpenJDK sources.
 #
 # upstreamed-patches: 
+#  - ZZ_archive/ms-patches/connect-timeout
+#  - ZZ_archive/ms-patches/jmx-remote-bootstrap
+#  - ZZ_archive/ms-patches/multiple-logins
+#  - ZZ_archive/ms-patches/processor-api
+#  - ZZ_archive/ms-patches/dt_socket-fix
 
 
 # Patches that we are no longer applying to our releases as they have
