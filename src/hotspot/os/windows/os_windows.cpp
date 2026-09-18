@@ -531,6 +531,15 @@ static unsigned thread_native_entry(void* t) {
   thread->record_stack_base_and_size();
   thread->initialize_thread_current();
 
+  // Guarantee enough committed stack for the stack exception dispatcher
+  // and handler. Note that Windows will only ever increase the current
+  // value, so we don't need to worry about the stack guarantee being
+  // reduced and impacting other uses.  We arrived at 32K through
+  // testing of known failure cases (will add regression tests
+  // upstream)
+  ULONG stack_guarantee = 32 * K;
+  SetThreadStackGuarantee(&stack_guarantee);
+
   OSThread* osthr = thread->osthread();
   assert(osthr->get_state() == RUNNABLE, "invalid os thread state");
 

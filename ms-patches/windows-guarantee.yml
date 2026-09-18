@@ -1,0 +1,9 @@
+title: Fix Windows stack exception handler issue
+- work_item: 
+- jbs_bug: 8392116
+- author: macarte
+- owner: macarte
+- contributors: macarte
+- details:
+- release_note:
+  - Fix Windows stack exception handler issue, when the handler is invoked near the committed/uncommitted stack boundary
