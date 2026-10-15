@@ -1529,6 +1529,11 @@ void Arguments::set_heap_size() {
       reasonable_max = MAX2(reasonable_max, (julong)MaxHeapSize);
     }
 
+    if (!FLAG_IS_DEFAULT(ErgoHeapSizeMinimum) && ErgoHeapSizeMinimum != 0) {
+      // Raise the heap size to ErgoHeapSizeMinimum
+      reasonable_max = MAX2(reasonable_max, (julong)ErgoHeapSizeMinimum);
+    }
+
     if (!FLAG_IS_DEFAULT(ErgoHeapSizeLimit) && ErgoHeapSizeLimit != 0) {
       // Limit the heap size to ErgoHeapSizeLimit
       reasonable_max = MIN2(reasonable_max, (julong)ErgoHeapSizeLimit);
