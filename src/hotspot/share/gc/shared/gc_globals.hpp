@@ -273,7 +273,12 @@
           range(0, 0XFFFFFFFFFFFFFFFF)                                      \
                                                                             \
   product(bool, AggressiveHeap, false,                                      \
-          "Optimize heap options for long-running memory intensive apps")   \
+          "Optimize heap options for long-running memory intensive apps")   \  
+                                                                            \
+  product(size_t, ErgoHeapSizeMinimum, 0,                                   \
+          "Minimum ergonomically set maximum heap size (in bytes); zero "   \
+          "means no minimum")                                               \
+          range(0, max_uintx)                                               \
                                                                             \
   product(size_t, ErgoHeapSizeLimit, 0,                                     \
           "Maximum ergonomically set heap size (in bytes); zero means use " \
