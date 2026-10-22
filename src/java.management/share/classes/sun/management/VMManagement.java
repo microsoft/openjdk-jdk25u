@@ -49,6 +49,9 @@ public interface VMManagement {
     public boolean isRemoteDiagnosticCommandsSupported();
 
     // AOT Subsystem
+    public String  getAOTMode();
+    public boolean isAOTRecording();
+    public long    getAOTRecordingDuration();
     public boolean endAOTRecording();
 
     // Class Loading Subsystem
