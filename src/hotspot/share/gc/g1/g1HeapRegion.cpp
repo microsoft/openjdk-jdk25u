@@ -145,6 +145,7 @@ void G1HeapRegion::clear_cardtable() {
 void G1HeapRegion::set_free() {
   if (!is_free()) {
     report_region_type_change(G1HeapRegionTraceType::Free);
+    _last_access_timestamp = Ticks::now();
   }
   _type.set_free();
 }
@@ -249,6 +250,7 @@ G1HeapRegion::G1HeapRegion(uint hrm_index,
   _surv_rate_group(nullptr),
   _age_index(G1SurvRateGroup::InvalidAgeIndex),
   _node_index(G1NUMA::UnknownNodeIndex),
+  _last_access_timestamp(),
   _pinned_object_count(0)
 {
   assert(Universe::on_page_boundary(mr.start()) && Universe::on_page_boundary(mr.end()),

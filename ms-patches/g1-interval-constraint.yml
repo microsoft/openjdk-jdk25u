@@ -1,0 +1,8 @@
+title: Constrain G1 interval to be a multiple of `interval_gran`
+- work_item: 3013486
+- jbs_bug:
+- author: raneashay
+- owner: raneashay
+- contributors: raneashay
+- details:
+- release_note: Constrain G1 interval to be a multiple of `interval_gran` (10ms)

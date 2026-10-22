@@ -31,10 +31,12 @@
 #include "gc/g1/g1RegionToSpaceMapper.hpp"
 #include "memory/allocation.hpp"
 #include "services/memoryUsage.hpp"
+#include "utilities/ticks.hpp"
 
 class G1HeapRegion;
 class G1HeapRegionClaimer;
 class G1HeapRegionClosure;
+class G1HeapSizingPolicy;
 class G1FreeRegionList;
 class WorkerThreads;
 
@@ -135,6 +137,10 @@ class G1HeapRegionManager: public CHeapObj<mtGC> {
   void deactivate_regions(uint start, uint num_regions);
   void reactivate_regions(uint start, uint num_regions);
   void uncommit_regions(uint start, uint num_regions);
+
+  // Time-based shrinking: find and deactivate oldest idle regions.
+  uint shrink_by_time_based_selection(uint num_regions_to_remove,
+                                      const G1HeapSizingPolicy* policy);
 
   // Allocate a new G1HeapRegion for the given index.
   G1HeapRegion* new_heap_region(uint hrm_index);
@@ -271,6 +277,10 @@ public:
   // Uncommit up to num_regions_to_remove regions that are completely free.
   // Return the actual number of uncommitted regions.
   uint shrink_by(uint num_regions_to_remove);
+
+  // Time-based variant: deactivate the oldest idle free regions.
+  uint shrink_by_time_based(uint num_regions_to_remove,
+                            const G1HeapSizingPolicy* policy);
 
   // Remove a number of regions starting at the specified index, which must be available,
   // empty, and free. The regions are marked inactive and can later be uncommitted.
