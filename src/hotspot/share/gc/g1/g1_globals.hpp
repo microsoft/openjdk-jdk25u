@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2024, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2026, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -342,6 +342,26 @@
           "Threshold for the number of code roots when reporting code root "\
           "scan cost related prediction samples. A sample must involve "    \
           "the same or more than this number of code roots to be used.")    \
+                                                                            \
+  product(bool, G1UseTimeBasedHeapSizing, true, DIAGNOSTIC,                 \
+          "Enable time-based heap sizing to uncommit memory from inactive " \
+          "regions independent of GC cycles")                               \
+                                                                            \
+  product(uintx, G1TimeBasedEvaluationIntervalMillis, 60000, MANAGEABLE,    \
+          "Interval in milliseconds between periodic heap-size evaluations "\
+          "when G1UseTimeBasedHeapSizing is enabled")                       \
+          range(1000, max_jint / 10 * 10)                                   \
+          constraint(G1TimeBasedEvaluationIntervalMillisConstraintFunc,AtParse) \
+                                                                            \
+  product(uintx, G1UncommitDelayMillis, 300000, MANAGEABLE,                 \
+          "A region is considered inactive if it has not been accessed "    \
+          "within this many milliseconds")                                  \
+          range(1000, LP64_ONLY(max_jlong) NOT_LP64(max_uintx / 2))         \
+                                                                            \
+  product(size_t, G1MinRegionsToUncommit, 10, DIAGNOSTIC,                   \
+          "Minimum number of inactive regions required before G1 will "     \
+          "attempt to uncommit memory")                                     \
+          range(1, max_uintx)                                               \
                                                                             \
   GC_G1_EVACUATION_FAILURE_FLAGS(develop,                                   \
                     develop_pd,                                             \

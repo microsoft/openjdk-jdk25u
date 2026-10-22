@@ -30,6 +30,7 @@
 #include "gc/g1/g1HeapRegionManager.inline.hpp"
 #include "gc/g1/g1HeapRegionPrinter.hpp"
 #include "gc/g1/g1HeapRegionSet.inline.hpp"
+#include "gc/g1/g1HeapSizingPolicy.hpp"
 #include "gc/g1/g1NUMAStats.hpp"
 #include "jfr/jfrEvents.hpp"
 #include "logging/logStream.hpp"
@@ -606,6 +607,75 @@ uint G1HeapRegionManager::shrink_by(uint num_regions_to_remove) {
   }
 
   verify_optional();
+
+  return removed;
+}
+
+uint G1HeapRegionManager::shrink_by_time_based(uint num_regions_to_remove,
+                                                const G1HeapSizingPolicy* policy) {
+  assert(num_committed_regions() > 0, "the region sequence should not be empty");
+  assert(num_regions_to_remove < num_committed_regions(), "We should never remove all regions");
+
+  if (num_regions_to_remove == 0) {
+    return 0;
+  }
+
+  uint removed = shrink_by_time_based_selection(num_regions_to_remove, policy);
+
+  verify_optional();
+
+  return removed;
+}
+
+uint G1HeapRegionManager::shrink_by_time_based_selection(uint num_regions_to_remove,
+                                                          const G1HeapSizingPolicy* policy) {
+  GrowableArray<G1HeapRegion*> idle_regions;
+
+  // Collect free regions that the policy considers idle.
+  class CollectIdleRegionsClosure : public G1HeapRegionClosure {
+    GrowableArray<G1HeapRegion*>* _idle_regions;
+    const G1HeapSizingPolicy* _policy;
+  public:
+    CollectIdleRegionsClosure(GrowableArray<G1HeapRegion*>* idle_regions,
+                              const G1HeapSizingPolicy* policy) :
+      _idle_regions(idle_regions),
+      _policy(policy) {}
+
+    virtual bool do_heap_region(G1HeapRegion* r) {
+      if (r->is_free() && _policy->should_uncommit_region(r)) {
+        _idle_regions->append(r);
+      }
+      return false;
+    }
+  } cl(&idle_regions, policy);
+
+  iterate(&cl);
+
+  if (idle_regions.length() == 0) {
+    return 0;
+  }
+
+  // Sort by access time (oldest first).
+  static auto compare_region_age = [](G1HeapRegion** a, G1HeapRegion** b) -> int {
+    Ticks time_a = (*a)->last_access_time();
+    Ticks time_b = (*b)->last_access_time();
+    if (time_a < time_b) return -1;
+    if (time_a > time_b) return 1;
+    return 0;
+  };
+  idle_regions.sort(compare_region_age);
+
+  uint removed = 0;
+  uint regions_to_process = MIN2(num_regions_to_remove, (uint)idle_regions.length());
+
+  for (uint i = 0; i < regions_to_process; i++) {
+    shrink_at(idle_regions.at(i)->hrm_index(), 1);
+    removed++;
+  }
+
+  if (removed > 0) {
+    log_debug(gc, ergo, heap)("Time-based shrink: deactivated %u oldest idle regions", removed);
+  }
 
   return removed;
 }
