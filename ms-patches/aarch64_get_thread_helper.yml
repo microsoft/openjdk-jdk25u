@@ -1,0 +1,7 @@
+title: aarch64_get_thread_helper()
+- work_item: 3013424
+- author: raneashay
+- owner: raneashay
+- contributors: raneashay
+- details:
+- release_note: Add optimized `aarch64_get_thread_helper()` for Windows/ARM64
