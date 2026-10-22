@@ -242,6 +242,45 @@ JVM_ENTRY(jboolean, JVM_AOTEndRecording(JNIEnv *env))
 #endif // INCLUDE_CDS
 JVM_END
 
+JVM_LEAF(jboolean, JVM_AOTIsRecording(JNIEnv *env))
+#if INCLUDE_CDS
+
+  if (!CDSConfig::is_dumping_preimage_static_archive()) {
+    // not a recording session
+    return JNI_FALSE;
+  }
+
+  if (MetaspaceShared::preimage_static_archive_dumped()) {
+    // recording has already completed, so we're no longer "training"
+    return JNI_FALSE;
+  }
+
+  // is training
+  return JNI_TRUE;
+#else
+  return JNI_FALSE;
+#endif // INCLUDE_CDS
+JVM_END
+
+JVM_ENTRY(jstring, JVM_AOTGetMode(JNIEnv *env))
+  HandleMark hm(THREAD);
+#if INCLUDE_CDS
+  const char* mode = AOTMode == nullptr ? "auto" : AOTMode;
+  Handle h = java_lang_String::create_from_platform_dependent_str(mode, CHECK_NULL);
+  return (jstring) JNIHandles::make_local(THREAD, h());
+#else
+  return nullptr;
+#endif // INCLUDE_CDS
+JVM_END
+
+JVM_LEAF(jlong, JVM_AOTGetRecordingDuration(JNIEnv *env))
+#if INCLUDE_CDS
+  return MetaspaceShared::get_preimage_static_archive_recording_duration();
+#else
+  return 0;
+#endif // INCLUDE_CDS
+JVM_END
+
 JVM_LEAF(jlong, JVM_CurrentTimeMillis(JNIEnv *env, jclass ignored))
   return os::javaTimeMillis();
 JVM_END

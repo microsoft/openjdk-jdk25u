@@ -45,6 +45,18 @@ public class HotSpotAOTCacheImpl implements HotSpotAOTCacheMXBean {
         this.jvm = vm;
     }
 
+    public String getMode() {
+        return jvm.getAOTMode();
+    }
+
+    public boolean isRecording() {
+        return jvm.isAOTRecording();
+    }
+
+    public long getRecordingDuration(){
+        return jvm.getAOTRecordingDuration();
+    }
+
     public boolean endRecording() {
         return jvm.endAOTRecording();
     }
