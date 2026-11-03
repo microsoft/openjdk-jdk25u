@@ -631,8 +631,7 @@ public class TestDependencyOffsets {
             case "byte"   -> new CPUMinVectorWidth[]{new CPUMinVectorWidth(SSE4_ASIMD, 4 )};
             case "char"   -> new CPUMinVectorWidth[]{new CPUMinVectorWidth(SSE4,       4 ),
                                                      new CPUMinVectorWidth(ASIMD,      8 )};
-            case "short"  -> new CPUMinVectorWidth[]{new CPUMinVectorWidth(SSE4,       4 ),
-                                                     new CPUMinVectorWidth(ASIMD,      8 )};
+            case "short"  -> new CPUMinVectorWidth[]{new CPUMinVectorWidth(SSE4_ASIMD, 4 )};
             case "int"    -> new CPUMinVectorWidth[]{new CPUMinVectorWidth(SSE4_ASIMD, 8 )};
             case "long"   -> new CPUMinVectorWidth[]{new CPUMinVectorWidth(SSE4_ASIMD, 16)};
             case "float"  -> new CPUMinVectorWidth[]{new CPUMinVectorWidth(SSE4_ASIMD, 8 )};
