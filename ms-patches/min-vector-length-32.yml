@@ -1,0 +1,8 @@
+title: Relax min vector length to 32-bit for short vectors
+- work_item: 3092494
+- jbs_bug:
+- author: raneashay
+- owner: raneashay
+- contributors: raneashay
+- details:
+- release_note: Enable vectorization of two-lane short vectors
