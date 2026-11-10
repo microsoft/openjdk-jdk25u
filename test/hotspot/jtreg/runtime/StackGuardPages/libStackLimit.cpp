@@ -24,18 +24,20 @@
 #include <windows.h>
 
 extern "C" __declspec(dllexport) int __cdecl checkStackLimit() {
-  PNT_TIB old_tib = reinterpret_cast<PNT_TIB>(NtCurrentTeb());
-  ULONG_PTR before = reinterpret_cast<ULONG_PTR>(old_tib->StackLimit);
+  PNT_TIB old_tib = (PNT_TIB) NtCurrentTeb();
+  ULONG_PTR before = (ULONG_PTR) old_tib->StackLimit;
 
+  // Compute an address that's comfortably below the existing `StackLimit`.
   const size_t offset = 256 * 1024;
-  volatile unsigned char* fault_addr =
+  volatile unsigned char* faultAddr =
       reinterpret_cast<volatile unsigned char*>(before - offset);
 
-  // Fault below StackLimit to exercise HotSpot's stack commitment recovery.
-  *fault_addr = 0;
+  // Trigger HotSpot's access violation handler, which will commit pages.
+  *faultAddr = 0;
 
-  PNT_TIB new_tib = reinterpret_cast<PNT_TIB>(NtCurrentTeb());
-  ULONG_PTR after = reinterpret_cast<ULONG_PTR>(new_tib->StackLimit);
-  ULONG_PTR faulted = reinterpret_cast<ULONG_PTR>(fault_addr);
+  // Correct recovery must lower StackLimit to or below the touched address.
+  PNT_TIB new_tib = (PNT_TIB) NtCurrentTeb();
+  ULONG_PTR after = (ULONG_PTR) new_tib->StackLimit;
+  ULONG_PTR faulted = reinterpret_cast<ULONG_PTR>(faultAddr);
   return after <= faulted ? 0 : 1;
 }
