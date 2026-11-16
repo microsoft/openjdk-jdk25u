@@ -1197,7 +1197,7 @@ void TemplateInterpreterGenerator::bang_stack_shadow_pages(bool native_call) {
     __ mov(probing_addr, sp);
     __ bind(L_start_selected);
 
-    // Set rscratch1 to the lowest probe address (prospective_sp - shadow_size).
+    // Set r3 to the lowest probe address (prospective_sp - shadow_size).
     Register lowest_probing_addr = r3;
     __ sub(lowest_probing_addr, prospective_sp, shadow_zone_size);
 
@@ -1726,7 +1726,7 @@ address TemplateInterpreterGenerator::generate_normal_entry(bool synchronized) {
 
   __ add(r3, r5, rscratch1);  // r3 = no. of additional locals + max expression stack size
 
-  // see if we've got enough room on the stack for locals plus overhead.
+  // see if we've got enough room on the stack for locals plus overhead and max_stack.
   generate_stack_overflow_check();
 
   __ mov(r3, r5); // r3 = no. of additional locals
